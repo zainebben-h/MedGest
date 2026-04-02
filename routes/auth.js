@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
     await utilisateur.save();
 
     const token = jwt.sign({ id: utilisateur._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token });
+    res.json({ success: true, token, role: utilisateur.role });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }
@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign({ id: utilisateur._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ success: true, token });
+    res.json({ success: true, token, role: utilisateur.role });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Erreur serveur.' });
   }

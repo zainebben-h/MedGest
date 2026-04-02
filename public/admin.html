@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedGest — Espace Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Sora:wght@600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,::before,::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#1756C8;--blue-lt:#2d72e8;--blue-glow:rgba(23,86,200,.15);
+  --green:#27a84a;--green-lt:#34c75e;
+  --dark:#0b1220;--surface:#ffffff;--surface2:#f5f8ff;--surface3:#edf2fc;
+  --border:#e2eaf7;--text:#0f1b2d;--muted:#7a8aaa;--error:#dc2626;
+  --amber:#f59e0b;--purple:#7c3aed;--red:#dc2626;
+  --sidebar-w:240px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--surface2);color:var(--text);overflow:hidden;}
+.shell{display:grid;grid-template-columns:var(--sidebar-w) 1fr;height:100vh;}
+
+/* SIDEBAR */
+.sidebar{background:var(--dark);display:flex;flex-direction:column;padding:0;position:relative;overflow:hidden;}
+.sidebar::after{content:'';position:absolute;bottom:0;right:0;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(39,168,74,.12) 0%,transparent 70%);pointer-events:none;}
+.sidebar::before{content:'';position:absolute;top:0;left:0;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(23,86,200,.14) 0%,transparent 70%);pointer-events:none;}
+.sidebar-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:11px;position:relative;z-index:2;}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--green));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.brand-name{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:white;letter-spacing:-.2px;}
+.brand-name span{color:var(--green-lt);}
+.sidebar-user{padding:14px 16px;margin:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;display:flex;align-items:center;gap:11px;position:relative;z-index:2;}
+.user-avatar{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#9f67f5);display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.user-info{overflow:hidden;}
+.user-name{font-size:.82rem;font-weight:700;color:white;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.user-role{font-size:.69rem;color:#f59e0b;font-weight:600;letter-spacing:.4px;text-transform:uppercase;}
+.nav{flex:1;padding:8px 10px;position:relative;z-index:2;overflow-y:auto;}
+.nav-label{font-size:.62rem;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1.2px;text-transform:uppercase;padding:10px 10px 5px;}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;cursor:pointer;font-size:.82rem;font-weight:600;color:rgba(255,255,255,.5);transition:all .18s;margin-bottom:2px;border:1px solid transparent;}
+.nav-item .ico{font-size:1rem;width:20px;text-align:center;flex-shrink:0;}
+.nav-item:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.06);}
+.nav-item.active{color:white;background:rgba(23,86,200,.25);border-color:rgba(23,86,200,.3);}
+.nav-item .badge{margin-left:auto;font-size:.62rem;font-weight:700;background:var(--blue);color:white;border-radius:100px;padding:2px 7px;}
+.nav-item .badge.red{background:var(--red);}
+.sidebar-footer{position:relative;z-index:2;padding:14px 14px 20px;border-top:1px solid rgba(255,255,255,.07);}
+.logout-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.4);font-size:.82rem;font-weight:500;border:none;background:none;width:100%;transition:all .2s;font-family:'DM Sans',sans-serif;}
+.logout-btn:hover{color:#f87171;background:rgba(220,38,38,.08);}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:white;border-bottom:1.5px solid var(--border);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;}
+.page-title{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--text);}
+.page-sub{font-size:.78rem;color:var(--muted);font-weight:500;}
+.topbar-right{display:flex;align-items:center;gap:10px;position:relative;}
+.top-btn{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:9px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--text);font-family:'DM Sans',sans-serif;transition:all .18s;}
+.top-btn:hover{border-color:var(--blue);color:var(--blue);}
+.top-btn.primary{background:linear-gradient(135deg,var(--blue),#1e9e40);color:white;border-color:transparent;box-shadow:0 3px 12px rgba(23,86,200,.22);}
+.top-btn.primary:hover{transform:translateY(-1px);}
+.notif-wrap{position:relative;}
+.notif-dot{width:8px;height:8px;background:#ef4444;border-radius:50%;position:absolute;top:-2px;right:-2px;}
+.notif-panel{position:absolute;top:52px;right:0;width:340px;background:white;border:1.5px solid var(--border);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.14);z-index:500;overflow:hidden;display:none;}
+.notif-panel.open{display:block;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.notif-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1.5px solid var(--border);}
+.notif-header-title{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;}
+.notif-mark-btn{font-size:.72rem;font-weight:600;color:var(--blue);background:none;border:none;cursor:pointer;}
+.notif-list{max-height:300px;overflow-y:auto;}
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:13px 18px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .18s;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item:hover{background:var(--surface2);}
+.notif-item.unread{background:#f0f7ff;}
+.notif-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.notif-ico.blue{background:rgba(23,86,200,.1);}
+.notif-ico.green{background:rgba(39,168,74,.1);}
+.notif-ico.amber{background:rgba(245,158,11,.1);}
+.notif-ico.red{background:rgba(220,38,38,.08);}
+.notif-content{flex:1;min-width:0;}
+.notif-title{font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:2px;}
+.notif-msg{font-size:.73rem;color:var(--muted);line-height:1.4;}
+.notif-time{font-size:.67rem;color:var(--muted);font-weight:500;margin-top:4px;}
+.notif-unread-dot{width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:5px;}
+.notif-footer{padding:10px 18px;border-top:1.5px solid var(--border);text-align:center;font-size:.72rem;color:var(--muted);}
+
+.content{flex:1;overflow-y:auto;padding:24px 28px;}
+.panel{display:none;animation:fadeUpPanel .3s ease;}
+.panel.active{display:block;}
+@keyframes fadeUpPanel{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:none;}}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:white;border:1.5px solid var(--border);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.07);}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:70px;height:70px;border-radius:50%;opacity:.12;transform:translate(20px,-20px);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.amber::before{background:var(--amber);}
+.stat-card.purple::before{background:var(--purple);}
+.sc-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:14px;}
+.sc-ico.blue{background:rgba(23,86,200,.1);}
+.sc-ico.green{background:rgba(39,168,74,.1);}
+.sc-ico.amber{background:rgba(245,158,11,.1);}
+.sc-ico.purple{background:rgba(124,58,237,.1);}
+.sc-val{font-family:'Sora',sans-serif;font-size:1.7rem;font-weight:800;color:var(--text);margin-bottom:3px;}
+.sc-lbl{font-size:.75rem;color:var(--muted);font-weight:500;}
+.sc-trend{font-size:.71rem;font-weight:700;margin-top:6px;}
+.sc-trend.up{color:var(--green);}
+.sc-trend.dn{color:var(--error);}
+
+/* CARDS */
+.two-col{display:grid;grid-template-columns:1.4fr 1fr;gap:18px;margin-bottom:24px;}
+.card{background:white;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-head{padding:16px 20px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);}
+.card-body{padding:16px 20px;}
+.link-btn{font-size:.75rem;font-weight:600;color:var(--blue);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;}
+.link-btn:hover{text-decoration:underline;}
+
+/* SECTION TITLE */
+.section-title{font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.section-title::before{content:'';width:4px;height:20px;background:linear-gradient(to bottom,var(--blue),var(--green));border-radius:2px;}
+
+/* TABLE */
+.table-wrap{background:white;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;}
+thead{background:var(--surface2);}
+th{padding:11px 16px;text-align:left;font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;border-bottom:1.5px solid var(--border);}
+td{padding:12px 16px;font-size:.83rem;color:var(--text);border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.avatar-cell{display:flex;align-items:center;gap:10px;}
+.av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:white;flex-shrink:0;font-family:'Sora',sans-serif;}
+.av.b1{background:linear-gradient(135deg,#1756C8,#2d72e8);}
+.av.b2{background:linear-gradient(135deg,#27a84a,#34c75e);}
+.av.b3{background:linear-gradient(135deg,#7c3aed,#9f67f5);}
+.av.b4{background:linear-gradient(135deg,#f59e0b,#fbbf24);}
+.av.b5{background:linear-gradient(135deg,#dc2626,#f87171);}
+.av-name{font-weight:600;font-size:.83rem;}
+.av-id{font-size:.7rem;color:var(--muted);font-weight:500;}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:100px;}
+.tag.active{background:rgba(39,168,74,.1);color:var(--green);}
+.tag.inactive{background:rgba(122,138,170,.1);color:var(--muted);}
+.tag.admin{background:rgba(124,58,237,.1);color:var(--purple);}
+.tag.medecin{background:rgba(23,86,200,.1);color:var(--blue);}
+.tag.secretaire{background:rgba(245,158,11,.1);color:var(--amber);}
+.tag.patient{background:rgba(39,168,74,.1);color:var(--green);}
+.action-btns{display:flex;gap:6px;}
+.icon-btn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.82rem;transition:all .18s;}
+.icon-btn:hover{border-color:var(--blue);background:rgba(23,86,200,.06);}
+.icon-btn.danger:hover{border-color:var(--error);background:rgba(220,38,38,.06);}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1.5px solid var(--border);}
+.page-info{font-size:.75rem;color:var(--muted);font-weight:500;}
+.page-btns{display:flex;gap:5px;}
+.page-btn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;color:var(--text);transition:all .18s;}
+.page-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
+.page-btn:hover:not(.active){border-color:var(--blue);color:var(--blue);}
+
+/* SEARCH */
+.search-bar{display:flex;gap:10px;margin-bottom:18px;}
+.search-inp-wrap{flex:1;position:relative;}
+.search-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);width:16px;height:16px;}
+.search-inp{width:100%;padding:11px 14px 11px 42px;border:1.5px solid var(--border);border-radius:11px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;background:white;outline:none;transition:all .18s;color:var(--text);}
+.search-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,86,200,.08);}
+.filter-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.pill{padding:6px 14px;border-radius:100px;font-size:.75rem;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--muted);transition:all .18s;font-family:'DM Sans',sans-serif;}
+.pill:hover{border-color:var(--blue);color:var(--blue);}
+.pill.active{background:var(--blue);color:white;border-color:var(--blue);}
+
+/* FORMS */
+.form-section{background:white;border:1.5px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px;}
+.fs-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.fs-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;}
+.fs-icon.blue{background:rgba(23,86,200,.1);}
+.fs-icon.green{background:rgba(39,168,74,.1);}
+.fs-icon.purple{background:rgba(124,58,237,.1);}
+.fs-title{font-family:'Sora',sans-serif;font-size:.85rem;font-weight:700;color:var(--text);}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.form-grid.three{grid-template-columns:repeat(3,1fr);}
+.form-grid.full{grid-template-columns:1fr;}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:.76rem;font-weight:700;color:var(--text);letter-spacing:.2px;}
+.req{color:var(--error);}
+.inp{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:500;color:var(--text);background:var(--surface2);transition:all .18s;outline:none;}
+.inp:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(23,86,200,.08);}
+.inp::placeholder{color:#b0bdd4;font-weight:400;}
+select.inp{cursor:pointer;}
+textarea.inp{resize:vertical;min-height:80px;}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;padding-top:8px;}
+.btn{display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:700;cursor:pointer;border:1.5px solid transparent;transition:all .18s;}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#1e9e40);color:white;box-shadow:0 3px 14px rgba(23,86,200,.22);}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(23,86,200,.3);}
+.btn-secondary{background:white;color:var(--text);border-color:var(--border);}
+.btn-secondary:hover{border-color:var(--blue);color:var(--blue);}
+.btn-danger{background:rgba(220,38,38,.08);color:var(--error);border-color:rgba(220,38,38,.2);}
+.btn-danger:hover{background:rgba(220,38,38,.14);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(11,18,32,.55);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;animation:fadeInM .2s ease;}
+@keyframes fadeInM{from{opacity:0;}to{opacity:1;}}
+.modal{background:white;border-radius:20px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.18);animation:slideUpM .25s ease;}
+@keyframes slideUpM{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:none;}}
+.modal-head{padding:22px 24px 18px;border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
+.modal-title{font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;}
+.modal-close{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.1rem;transition:all .18s;}
+.modal-close:hover{border-color:var(--error);color:var(--error);}
+.modal-body{padding:22px 24px;}
+.modal-foot{padding:16px 24px;border-top:1.5px solid var(--border);display:flex;gap:10px;justify-content:flex-end;}
+
+/* CHART BAR */
+.chart-wrap{padding:8px 0;}
+.chart-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.chart-label{font-size:.75rem;font-weight:600;color:var(--muted);width:80px;flex-shrink:0;text-align:right;}
+.chart-bar-bg{flex:1;height:8px;background:var(--surface2);border-radius:100px;overflow:hidden;}
+.chart-bar-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .8s ease;}
+.chart-val{font-size:.75rem;font-weight:700;color:var(--text);width:30px;text-align:right;}
+
+/* ACTIVITY */
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.act-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+.act-ico.blue{background:rgba(23,86,200,.1);}
+.act-ico.green{background:rgba(39,168,74,.1);}
+.act-ico.amber{background:rgba(245,158,11,.1);}
+.act-ico.red{background:rgba(220,38,38,.08);}
+.act-content{flex:1;}
+.act-title{font-size:.82rem;font-weight:600;color:var(--text);}
+.act-time{font-size:.7rem;color:var(--muted);margin-top:2px;}
+
+/* QUICK ACTIONS */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.quick-act{display:flex;flex-direction:column;align-items:center;gap:7px;padding:16px 10px;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:.75rem;font-weight:600;color:var(--text);text-align:center;transition:all .18s;font-family:'DM Sans',sans-serif;}
+.quick-act:hover{background:white;border-color:var(--blue);color:var(--blue);transform:translateY(-1.5px);box-shadow:0 4px 14px rgba(23,86,200,.1);}
+.quick-act .qico{font-size:1.4rem;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--dark);color:white;border-radius:12px;padding:12px 18px;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:10px;z-index:2000;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);}
+.toast.show{transform:none;opacity:1;}
+
+/* RAPPORT */
+.rapport-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.rapport-card{background:white;border:1.5px solid var(--border);border-radius:16px;padding:20px;text-align:center;transition:all .18s;cursor:pointer;}
+.rapport-card:hover{border-color:var(--blue);transform:translateY(-2px);box-shadow:0 8px 24px rgba(23,86,200,.1);}
+.rapport-ico{font-size:2rem;margin-bottom:10px;}
+.rapport-title{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;color:var(--text);margin-bottom:5px;}
+.rapport-desc{font-size:.75rem;color:var(--muted);line-height:1.5;}
+
+@media(max-width:1100px){.stats-row{grid-template-columns:repeat(2,1fr);}.two-col{grid-template-columns:1fr;}.rapport-grid{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <img src="MedGest-removebg-preview.png" alt="MedGest" style="width:36px;height:36px;object-fit:contain;border-radius:10px;flex-shrink:0;" onerror="this.style.display='none';document.querySelector('.brand-icon').style.display='flex'"/>
+    <div class="brand-icon" style="display:none;">🏥</div>
+    <div class="brand-name">Med<span>Gest</span></div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">🛡️</div>
+    <div class="user-info">
+      <div class="user-name" id="adminName">Administrateur</div>
+      <div class="user-role">Admin</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" id="nav-dashboard" onclick="showPanel('dashboard',this)"><span class="ico">🏠</span>Tableau de bord</div>
+    <div class="nav-label">Gestion</div>
+    <div class="nav-item" id="nav-utilisateurs" onclick="showPanel('utilisateurs',this)"><span class="ico">👥</span>Utilisateurs<span class="badge">12</span></div>
+    <div class="nav-item" id="nav-medecins" onclick="showPanel('medecins',this)"><span class="ico">👨‍⚕️</span>Médecins<span class="badge">5</span></div>
+    <div class="nav-label">Analyses</div>
+    <div class="nav-item" id="nav-rapports" onclick="showPanel('rapports',this)"><span class="ico">📊</span>Rapports & Stats</div>
+  </nav>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Se déconnecter
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">Tableau de bord</div>
+      <div class="page-sub" id="pageSub"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="top-btn notif-wrap" id="notifBtn" onclick="toggleNotif(event)">
+        🔔 <span class="notif-dot" id="notifDot"></span>
+      </button>
+      <div class="notif-panel" id="notifPanel">
+        <div class="notif-header">
+          <div class="notif-header-title">🔔 Notifications</div>
+          <button class="notif-mark-btn" onclick="markAllRead()">Tout marquer lu</button>
+        </div>
+        <div class="notif-list" id="notifList"></div>
+        <div class="notif-footer">Fin des notifications</div>
+      </div>
+      <button class="top-btn primary" onclick="openModal('modalAddUser')">+ Nouvel utilisateur</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="panel-dashboard" class="panel active">
+      <div class="stats-row">
+        <div class="stat-card blue"><div class="sc-ico blue">👥</div><div class="sc-val">12</div><div class="sc-lbl">Utilisateurs actifs</div><div class="sc-trend up">↑ +2 ce mois</div></div>
+        <div class="stat-card green"><div class="sc-ico green">🧑‍⚕️</div><div class="sc-val">5</div><div class="sc-lbl">Médecins enregistrés</div><div class="sc-trend up">↑ Tous actifs</div></div>
+        <div class="stat-card amber"><div class="sc-ico amber">🧑</div><div class="sc-val">124</div><div class="sc-lbl">Patients total</div><div class="sc-trend up">↑ +8 ce mois</div></div>
+        <div class="stat-card purple"><div class="sc-ico purple">📅</div><div class="sc-val">18</div><div class="sc-lbl">RDV aujourd'hui</div><div class="sc-trend up">↑ 3 en attente</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-head"><div class="card-title">📈 Activité mensuelle — RDV</div></div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <div class="chart-bar-row"><div class="chart-label">Novembre</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:55%"></div></div><div class="chart-val">55</div></div>
+              <div class="chart-bar-row"><div class="chart-label">Décembre</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:62%"></div></div><div class="chart-val">62</div></div>
+              <div class="chart-bar-row"><div class="chart-label">Janvier</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:78%"></div></div><div class="chart-val">78</div></div>
+              <div class="chart-bar-row"><div class="chart-label">Février</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:70%"></div></div><div class="chart-val">70</div></div>
+              <div class="chart-bar-row"><div class="chart-label">Mars</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:85%"></div></div><div class="chart-val">85</div></div>
+              <div class="chart-bar-row"><div class="chart-label">Avril</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:22%"></div></div><div class="chart-val">18</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">⚡ Actions rapides</div></div>
+          <div class="card-body">
+            <div class="quick-grid">
+              <div class="quick-act" onclick="showPanel('utilisateurs',document.getElementById('nav-utilisateurs'))"><span class="qico">👤</span>Créer compte</div>
+              <div class="quick-act" onclick="showPanel('medecins',document.getElementById('nav-medecins'))"><span class="qico">👨‍⚕️</span>Ajouter médecin</div>
+              <div class="quick-act" onclick="showPanel('rapports',document.getElementById('nav-rapports'))"><span class="qico">📊</span>Voir rapports</div>
+              <div class="quick-act" onclick="showToast('Export CSV généré','📥')"><span class="qico">📥</span>Exporter données</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">🕐 Activité récente</div><button class="link-btn">Voir tout</button></div>
+        <div class="card-body">
+          <div class="activity-item"><div class="act-ico blue">👤</div><div class="act-content"><div class="act-title">Nouveau compte créé — Secrétaire Fatma Riahi</div><div class="act-time">Il y a 30 min</div></div></div>
+          <div class="activity-item"><div class="act-ico green">🧑‍⚕️</div><div class="act-content"><div class="act-title">Médecin ajouté — Dr. Sami Elloumi (Neurologie)</div><div class="act-time">Il y a 2h</div></div></div>
+          <div class="activity-item"><div class="act-ico amber">✏️</div><div class="act-content"><div class="act-title">Profil modifié — Dr. Karim Mansour</div><div class="act-time">Hier à 14:30</div></div></div>
+          <div class="activity-item"><div class="act-ico red">🗑️</div><div class="act-content"><div class="act-title">Compte désactivé — PAT-00089</div><div class="act-time">Il y a 2 jours</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UTILISATEURS -->
+    <div id="panel-utilisateurs" class="panel">
+      <div class="section-title">Gestion des utilisateurs</div>
+      <div class="search-bar">
+        <div class="search-inp-wrap">
+          <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-inp" type="text" placeholder="Rechercher un utilisateur…" oninput="filterTable('usersTbody',this.value)"/>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modalAddUser')">+ Nouvel utilisateur</button>
+      </div>
+      <div class="filter-pills" id="userPills">
+        <div class="pill active" onclick="setPill(this,'userPills')">Tous (12)</div>
+        <div class="pill" onclick="setPill(this,'userPills')">Admin (1)</div>
+        <div class="pill" onclick="setPill(this,'userPills')">Médecins (5)</div>
+        <div class="pill" onclick="setPill(this,'userPills')">Secrétaires (2)</div>
+        <div class="pill" onclick="setPill(this,'userPills')">Patients (124)</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Utilisateur</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr></thead>
+          <tbody id="usersTbody">
+            <tr><td><div class="avatar-cell"><div class="av b3">AD</div><div><div class="av-name">Administrateur</div><div class="av-id">USR-001</div></div></div></td><td>admin@medgest.com</td><td><span class="tag admin">Admin</span></td><td><span class="tag active">● Actif</span></td><td>01/01/2026</td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditUser')">✏️</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b1">KM</div><div><div class="av-name">Dr. Karim Mansour</div><div class="av-id">USR-002</div></div></div></td><td>k.mansour@medgest.com</td><td><span class="tag medecin">Médecin</span></td><td><span class="tag active">● Actif</span></td><td>15/01/2026</td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditUser')">✏️</div><div class="icon-btn danger" onclick="showToast('Compte désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b2">AS</div><div><div class="av-name">Dr. Amel Slimane</div><div class="av-id">USR-003</div></div></div></td><td>a.slimane@medgest.com</td><td><span class="tag medecin">Médecin</span></td><td><span class="tag active">● Actif</span></td><td>15/01/2026</td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditUser')">✏️</div><div class="icon-btn danger" onclick="showToast('Compte désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b4">FR</div><div><div class="av-name">Fatma Riahi</div><div class="av-id">USR-004</div></div></div></td><td>f.riahi@medgest.com</td><td><span class="tag secretaire">Secrétaire</span></td><td><span class="tag active">● Actif</span></td><td>01/03/2026</td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditUser')">✏️</div><div class="icon-btn danger" onclick="showToast('Compte désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b5">SM</div><div><div class="av-name">Sara Mansouri</div><div class="av-id">PAT-00042</div></div></div></td><td>sara.mansouri@email.com</td><td><span class="tag patient">Patient</span></td><td><span class="tag active">● Actif</span></td><td>12/02/2026</td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditUser')">✏️</div><div class="icon-btn danger" onclick="showToast('Compte désactivé','🔒')">🔒</div></div></td></tr>
+          </tbody>
+        </table>
+        <div class="pagination">
+          <div class="page-info">Affichage de 1–5 sur 12 utilisateurs</div>
+          <div class="page-btns">
+            <div class="page-btn">‹</div>
+            <div class="page-btn active">1</div>
+            <div class="page-btn">2</div>
+            <div class="page-btn">3</div>
+            <div class="page-btn">›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÉDECINS -->
+    <div id="panel-medecins" class="panel">
+      <div class="section-title">Gestion des médecins</div>
+      <div class="search-bar">
+        <div class="search-inp-wrap">
+          <svg class="search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-inp" type="text" placeholder="Rechercher un médecin…" oninput="filterTable('medecinsTbody',this.value)"/>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modalAddMedecin')">+ Ajouter médecin</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Médecin</th><th>Spécialité</th><th>Email</th><th>Téléphone</th><th>Patients</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody id="medecinsTbody">
+            <tr><td><div class="avatar-cell"><div class="av b1">KM</div><div><div class="av-name">Dr. Karim Mansour</div><div class="av-id">MED-001</div></div></div></td><td>Cardiologie</td><td>k.mansour@medgest.com</td><td>+216 22 111 222</td><td>42</td><td><span class="tag active">● Actif</span></td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditMedecin')">✏️</div><div class="icon-btn danger" onclick="showToast('Médecin désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b2">AS</div><div><div class="av-name">Dr. Amel Slimane</div><div class="av-id">MED-002</div></div></div></td><td>Pédiatrie</td><td>a.slimane@medgest.com</td><td>+216 22 333 444</td><td>35</td><td><span class="tag active">● Actif</span></td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditMedecin')">✏️</div><div class="icon-btn danger" onclick="showToast('Médecin désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b3">SE</div><div><div class="av-name">Dr. Sami Elloumi</div><div class="av-id">MED-003</div></div></div></td><td>Neurologie</td><td>s.elloumi@medgest.com</td><td>+216 22 555 666</td><td>28</td><td><span class="tag active">● Actif</span></td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditMedecin')">✏️</div><div class="icon-btn danger" onclick="showToast('Médecin désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b4">LT</div><div><div class="av-name">Dr. Leila Trabelsi</div><div class="av-id">MED-004</div></div></div></td><td>Dermatologie</td><td>l.trabelsi@medgest.com</td><td>+216 22 777 888</td><td>19</td><td><span class="tag active">● Actif</span></td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditMedecin')">✏️</div><div class="icon-btn danger" onclick="showToast('Médecin désactivé','🔒')">🔒</div></div></td></tr>
+            <tr><td><div class="avatar-cell"><div class="av b5">YM</div><div><div class="av-name">Dr. Youssef Maalej</div><div class="av-id">MED-005</div></div></div></td><td>Ophtalmologie</td><td>y.maalej@medgest.com</td><td>+216 22 999 000</td><td>14</td><td><span class="tag inactive">● Inactif</span></td><td><div class="action-btns"><div class="icon-btn" onclick="openModal('modalEditMedecin')">✏️</div><div class="icon-btn danger" onclick="showToast('Médecin activé','✅')">✅</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div id="panel-rapports" class="panel">
+      <div class="section-title">Rapports & Statistiques</div>
+      <div class="rapport-grid">
+        <div class="rapport-card" onclick="showToast('Rapport généré — RDV Mensuel','📊')"><div class="rapport-ico">📅</div><div class="rapport-title">Rapport RDV Mensuel</div><div class="rapport-desc">Analyse complète des rendez-vous par mois, médecin et spécialité.</div></div>
+        <div class="rapport-card" onclick="showToast('Rapport généré — Patients','👥')"><div class="rapport-ico">👥</div><div class="rapport-title">Rapport Patients</div><div class="rapport-desc">Évolution des dossiers patients, nouvelles inscriptions, taux d'activité.</div></div>
+        <div class="rapport-card" onclick="showToast('Rapport généré — Médecins','🧑‍⚕️')"><div class="rapport-ico">🧑‍⚕️</div><div class="rapport-title">Performance Médecins</div><div class="rapport-desc">Charge de travail par médecin, taux de consultation, spécialités.</div></div>
+        <div class="rapport-card" onclick="showToast('Export CSV en cours…','📥')"><div class="rapport-ico">📥</div><div class="rapport-title">Exporter CSV</div><div class="rapport-desc">Télécharger toutes les données en format CSV pour Excel.</div></div>
+        <div class="rapport-card" onclick="showToast('Rapport généré — Salles','🚪')"><div class="rapport-ico">🚪</div><div class="rapport-title">Occupation Salles</div><div class="rapport-desc">Taux d'occupation des salles par jour, semaine et mois.</div></div>
+        <div class="rapport-card" onclick="showToast('Rapport annuel en cours…','📋')"><div class="rapport-ico">📋</div><div class="rapport-title">Rapport Annuel</div><div class="rapport-desc">Synthèse complète de l'activité annuelle de la clinique.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">📊 Répartition par spécialité</div></div>
+        <div class="card-body">
+          <div class="chart-wrap">
+            <div class="chart-bar-row"><div class="chart-label">Cardiologie</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:85%"></div></div><div class="chart-val">42</div></div>
+            <div class="chart-bar-row"><div class="chart-label">Pédiatrie</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:70%"></div></div><div class="chart-val">35</div></div>
+            <div class="chart-bar-row"><div class="chart-label">Neurologie</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:56%"></div></div><div class="chart-val">28</div></div>
+            <div class="chart-bar-row"><div class="chart-label">Dermatologie</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:38%"></div></div><div class="chart-val">19</div></div>
+            <div class="chart-bar-row"><div class="chart-label">Ophtalmologie</div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:28%"></div></div><div class="chart-val">14</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<!-- MODAL: ADD USER -->
+<div class="modal-overlay" id="modalAddUser">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">👤 Créer un utilisateur</div><button class="modal-close" onclick="closeModal('modalAddUser')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Nom <span class="req">*</span></label><input class="inp" type="text" placeholder="Ben Salem"/></div>
+        <div class="field"><label>Prénom <span class="req">*</span></label><input class="inp" type="text" placeholder="Ahmed"/></div>
+      </div>
+      <div class="field" style="margin-bottom:14px;"><label>Email <span class="req">*</span></label><input class="inp" type="email" placeholder="utilisateur@medgest.com"/></div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Rôle <span class="req">*</span></label><select class="inp"><option value="">Sélectionner</option><option>admin</option><option>medecin</option><option>secretaire</option><option>patient</option></select></div>
+        <div class="field"><label>Mot de passe <span class="req">*</span></label><input class="inp" type="password" placeholder="••••••••"/></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modalAddUser')">Annuler</button>
+      <button class="btn btn-primary" onclick="createUser()">💾 Créer le compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT USER -->
+<div class="modal-overlay" id="modalEditUser">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">✏️ Modifier l'utilisateur</div><button class="modal-close" onclick="closeModal('modalEditUser')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Nom</label><input class="inp" type="text" value="Karim"/></div>
+        <div class="field"><label>Prénom</label><input class="inp" type="text" value="Mansour"/></div>
+      </div>
+      <div class="field" style="margin-bottom:14px;"><label>Email</label><input class="inp" type="email" value="k.mansour@medgest.com"/></div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Rôle</label><select class="inp"><option>admin</option><option selected>medecin</option><option>secretaire</option><option>patient</option></select></div>
+        <div class="field"><label>Statut</label><select class="inp"><option>Actif</option><option>Inactif</option></select></div>
+      </div>
+      <div class="field"><label>Nouveau mot de passe</label><input class="inp" type="password" placeholder="Laisser vide pour ne pas changer"/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="closeModal('modalEditUser');showToast('Compte supprimé','🗑️')">Supprimer</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalEditUser')">Annuler</button>
+      <button class="btn btn-primary" onclick="closeModal('modalEditUser');showToast('Utilisateur mis à jour','✅')">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD MÉDECIN -->
+<div class="modal-overlay" id="modalAddMedecin">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">🧑‍⚕️ Ajouter un médecin</div><button class="modal-close" onclick="closeModal('modalAddMedecin')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Nom <span class="req">*</span></label><input class="inp" type="text" placeholder="Mansour"/></div>
+        <div class="field"><label>Prénom <span class="req">*</span></label><input class="inp" type="text" placeholder="Karim"/></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Spécialité <span class="req">*</span></label><select class="inp"><option value="">Sélectionner</option><option>Médecine Générale</option><option>Cardiologie</option><option>Pédiatrie</option><option>Neurologie</option><option>Dermatologie</option><option>Ophtalmologie</option></select></div>
+        <div class="field"><label>Téléphone</label><input class="inp" type="tel" placeholder="+216 XX XXX XXX"/></div>
+      </div>
+      <div class="field" style="margin-bottom:14px;"><label>Email professionnel <span class="req">*</span></label><input class="inp" type="email" placeholder="medecin@medgest.com"/></div>
+      <div class="field"><label>Mot de passe <span class="req">*</span></label><input class="inp" type="password" placeholder="••••••••"/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modalAddMedecin')">Annuler</button>
+      <button class="btn btn-primary" onclick="closeModal('modalAddMedecin');showToast('Médecin ajouté avec succès','🧑‍⚕️')">💾 Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDIT MÉDECIN -->
+<div class="modal-overlay" id="modalEditMedecin">
+  <div class="modal">
+    <div class="modal-head"><div class="modal-title">✏️ Modifier le médecin</div><button class="modal-close" onclick="closeModal('modalEditMedecin')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Nom</label><input class="inp" type="text" value="Mansour"/></div>
+        <div class="field"><label>Prénom</label><input class="inp" type="text" value="Karim"/></div>
+      </div>
+      <div class="form-grid" style="margin-bottom:14px;">
+        <div class="field"><label>Spécialité</label><select class="inp"><option selected>Cardiologie</option><option>Pédiatrie</option><option>Neurologie</option><option>Dermatologie</option></select></div>
+        <div class="field"><label>Téléphone</label><input class="inp" type="tel" value="+216 22 111 222"/></div>
+      </div>
+      <div class="field"><label>Email</label><input class="inp" type="email" value="k.mansour@medgest.com"/></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal('modalEditMedecin')">Annuler</button>
+      <button class="btn btn-primary" onclick="closeModal('modalEditMedecin');showToast('Médecin mis à jour','✅')">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="toastIco">✅</span><span id="toastMsg">Opération réussie</span></div>
+
+<script>
+// AUTH CHECK
+const token = localStorage.getItem('token');
+const role = localStorage.getItem('role');
+if(!token || role !== 'admin') window.location.href = 'login.html';
+
+// Show admin name
+const adminName = document.getElementById('adminName');
+if(adminName) adminName.textContent = 'Administrateur';
+
+// DATE
+const now = new Date();
+document.getElementById('pageSub').textContent = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+// NAVIGATION
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if(navEl) navEl.classList.add('active');
+  const titles = {dashboard:'Tableau de bord', utilisateurs:'Gestion des utilisateurs', medecins:'Gestion des médecins', rapports:'Rapports & Statistiques'};
+  document.getElementById('pageTitle').textContent = titles[id] || id;
+}
+
+// MODALS
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('click', e => { if(e.target === o) o.classList.remove('open'); }));
+
+// TOAST
+let toastTimer;
+function showToast(msg, ico='✅') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIco').textContent = ico;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// CREATE USER (calls real API)
+async function createUser() {
+  showToast('Fonctionnalité API à connecter','⚙️');
+  closeModal('modalAddUser');
+}
+
+// SEARCH FILTER
+function filterTable(tbodyId, q) {
+  const rows = document.querySelectorAll('#'+tbodyId+' tr');
+  rows.forEach(r => { r.style.display = !q || r.textContent.toLowerCase().includes(q.toLowerCase()) ? '' : 'none'; });
+}
+
+// PILLS
+function setPill(el, groupId) {
+  document.querySelectorAll('#'+groupId+' .pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// NOTIFICATIONS
+let notifications = [
+  {id:1, ico:'👤', icoClass:'blue', title:'Nouveau compte créé', msg:'Secrétaire Fatma Riahi — il y a 30 min', time:'Il y a 30 min', read:false},
+  {id:2, ico:'🧑‍⚕️', icoClass:'green', title:'Médecin ajouté', msg:'Dr. Sami Elloumi — Neurologie', time:'Il y a 2h', read:false},
+  {id:3, ico:'⚠️', icoClass:'amber', title:'Compte inactif détecté', msg:'Dr. Youssef Maalej — aucune connexion depuis 30 jours', time:'Hier', read:true},
+];
+let notifOpen = false;
+
+function renderNotifs() {
+  const list = document.getElementById('notifList');
+  const unread = notifications.filter(n => !n.read).length;
+  document.getElementById('notifDot').style.display = unread > 0 ? 'block' : 'none';
+  list.innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.read?'':'unread'}" onclick="readNotif(${n.id})">
+      <div class="notif-ico ${n.icoClass}">${n.ico}</div>
+      <div class="notif-content">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-msg">${n.msg}</div>
+        <div class="notif-time">${n.time}</div>
+      </div>
+      ${!n.read ? '<div class="notif-unread-dot"></div>' : ''}
+    </div>`).join('');
+}
+
+function toggleNotif(e) {
+  e.stopPropagation();
+  notifOpen = !notifOpen;
+  const panel = document.getElementById('notifPanel');
+  panel.classList.toggle('open', notifOpen);
+  if(notifOpen) renderNotifs();
+}
+function readNotif(id) { notifications.find(n=>n.id===id).read=true; renderNotifs(); }
+function markAllRead() { notifications.forEach(n=>n.read=true); renderNotifs(); showToast('Toutes les notifications lues','✅'); }
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notifPanel');
+  const btn = document.getElementById('notifBtn');
+  if(notifOpen && !panel.contains(e.target) && !btn.contains(e.target)) { notifOpen=false; panel.classList.remove('open'); }
+});
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('role');
+  window.location.href = 'login.html';
+}
+
+// INIT
+renderNotifs();
+</script>
+</body>
+</html>
