@@ -4,6 +4,12 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
+const patientRoutes = require('./routes/patients');
+app.use('/api/patients', patientRoutes);
+app.use('/api/models', require('./routes/models'));
+app.use('/api/rendezVous', require('./routes/rendezVous'));
+app.use('/api/utilisateurs', require('./routes/utilisateurs'));
+
 const app = express();
 
 // Middleware
@@ -23,7 +29,7 @@ app.use('/api/rendezVous', require('./routes/rendezVous'));
 // Démarrer le serveur
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`Serveur démarré sur http://localhost:3000`);
 });
 app.use(express.static('public'));
 app.use('/api/utilisateurs', require('./routes/utilisateurs'));
