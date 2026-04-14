@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedGest — Patient</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#1756C8;--blue-lt:#2d72e8;--blue-glow:rgba(23,86,200,.18);
+  --green:#27a84a;--green-lt:#34c75e;
+  --red:#dc2626;--red-lt:#ef4444;
+  --dark:#0b1220;--surface:#ffffff;--surface2:#f5f8ff;
+  --border:#e2eaf7;--text:#0f1b2d;--muted:#7a8aaa;
+  --sidebar-w:240px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--surface2);color:var(--text);}
+.shell{display:flex;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--dark);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-brand{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:12px;}
+.brand-name{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:800;color:white;}
+.brand-name span{color:var(--green-lt);}
+.role-badge{margin:16px 20px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;}
+.role-badge .role-text{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.5px;text-transform:uppercase;}
+.nav{flex:1;padding:8px 12px;overflow-y:auto;}
+.nav-section{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:16px 8px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.55);font-size:.85rem;font-weight:500;transition:all .2s;margin-bottom:2px;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);}
+.nav-item.active{background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(23,86,200,.2));color:white;border:1px solid rgba(99,102,241,.25);}
+.nav-ico{font-size:1rem;width:20px;text-align:center;}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.07);}
+.user-info{display:flex;align-items:center;gap:10px;}
+.avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#22d3ee);display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:white;flex-shrink:0;}
+.user-name{font-size:.83rem;font-weight:600;color:white;}
+.user-role{font-size:.7rem;color:rgba(255,255,255,.35);}
+.logout-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);font-size:.75rem;padding:4px 8px;border-radius:6px;transition:all .2s;}
+.logout-btn:hover{background:rgba(255,255,255,.07);}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left h2{font-family:'Sora',sans-serif;font-size:1.15rem;font-weight:800;}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+
+/* ── TÂCHE 1 : Bouton notifications avec compteur ── */
+.notif-wrap{position:relative;}
+.notif-btn{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;position:relative;transition:all .2s;}
+.notif-btn:hover{border-color:#6366f1;}
+/* Compteur numérique sur la cloche */
+.notif-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;background:#6366f1;border-radius:50%;border:2px solid white;font-size:.6rem;font-weight:800;color:white;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+.notif-count.hidden{display:none;}
+
+/* Panneau déroulant notifications */
+.notif-panel{position:absolute;top:48px;right:0;width:320px;background:white;border:1.5px solid var(--border);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.13);z-index:300;display:none;overflow:hidden;}
+.notif-panel.open{display:block;animation:fadeUp .2s ease;}
+.notif-panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.notif-panel-header h4{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;}
+.notif-panel-header button{font-size:.72rem;color:#6366f1;background:none;border:none;cursor:pointer;font-weight:600;}
+.notif-list{max-height:280px;overflow-y:auto;}
+.notif-item{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;cursor:pointer;transition:background .15s;}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:rgba(99,102,241,.04);}
+.notif-item:hover{background:var(--surface2);}
+.notif-ico{font-size:1.1rem;flex-shrink:0;margin-top:2px;}
+.notif-body p{font-size:.8rem;color:var(--text);line-height:1.4;}
+.notif-body small{font-size:.7rem;color:var(--muted);}
+.notif-panel-footer{padding:10px 18px;text-align:center;border-top:1px solid var(--border);}
+.notif-panel-footer small{font-size:.72rem;color:var(--muted);}
+
+/* ── CONTENU ── */
+.content{padding:28px 32px;flex:1;}
+.page{display:none;}
+.page.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+/* ── WELCOME ── */
+.welcome-card{background:linear-gradient(135deg,var(--dark) 0%,#162040 100%);border-radius:20px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden;}
+.welcome-card::before{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(23,86,200,.2) 0%,transparent 70%);top:-150px;right:-80px;}
+.welcome-card::after{content:'';position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(39,168,74,.12) 0%,transparent 70%);bottom:-100px;left:200px;}
+.welcome-text{position:relative;z-index:2;}
+.welcome-text h3{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:white;margin-bottom:6px;}
+.welcome-text p{font-size:.85rem;color:rgba(255,255,255,.5);}
+.next-rdv{position:relative;z-index:2;margin-top:20px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:16px 20px;display:flex;align-items:center;gap:16px;max-width:420px;}
+.next-rdv-ico{font-size:1.6rem;}
+.next-rdv-info{flex:1;}
+.next-rdv-label{font-size:.7rem;color:rgba(255,255,255,.4);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.next-rdv-val{font-size:.92rem;font-weight:700;color:white;margin-top:2px;}
+.next-rdv-sub{font-size:.75rem;color:rgba(255,255,255,.5);}
+.rdv-tag{background:rgba(52,199,94,.2);border:1px solid rgba(52,199,94,.3);color:var(--green-lt);font-size:.7rem;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;}
+
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:white;border:1.5px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.06);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.blue::before{background:linear-gradient(90deg,var(--blue),var(--blue-lt));}
+.stat-card.green::before{background:linear-gradient(90deg,var(--green),var(--green-lt));}
+.stat-card.indigo::before{background:linear-gradient(90deg,#6366f1,#818cf8);}
+.stat-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.stat-icon.blue{background:rgba(23,86,200,.1);}
+.stat-icon.green{background:rgba(39,168,74,.1);}
+.stat-icon.indigo{background:rgba(99,102,241,.1);}
+.stat-val{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;line-height:1;}
+.stat-lbl{font-size:.78rem;color:var(--muted);font-weight:500;margin-top:4px;}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.card{background:white;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-header h3{font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;}
+.btn-sm{padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:var(--blue);color:white;}
+.btn-primary:hover{background:var(--blue-lt);}
+.btn-outline{background:white;color:var(--blue);border:1.5px solid var(--blue);}
+.btn-outline:hover{background:rgba(23,86,200,.06);}
+.btn-red{background:var(--red-lt);color:white;border:none;}
+.btn-red:hover{background:var(--red);}
+
+table{width:100%;border-collapse:collapse;}
+thead th{padding:11px 20px;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;}
+tbody td{padding:13px 20px;font-size:.84rem;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#fafbff;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;}
+.badge.confirmed{background:rgba(39,168,74,.1);color:var(--green);}
+.badge.pending{background:rgba(245,158,11,.1);color:#d97706;}
+.badge.cancelled{background:rgba(220,38,38,.1);color:#dc2626;}
+.badge.done{background:rgba(99,102,241,.1);color:#6366f1;}
+
+/* ── TÂCHE 2 : Sélecteurs dépendants spécialité → médecin ── */
+.select-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:.78rem;font-weight:600;margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;padding:9px 13px;border:1.5px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--text);background:var(--surface2);outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);background:white;}
+.field select:disabled{opacity:.5;cursor:not-allowed;}
+
+/* Créneaux horaires disponibles / indisponibles */
+.slots-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.slot{padding:7px 14px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;transition:all .2s;}
+.slot:hover:not(.slot-taken){border-color:var(--blue);color:var(--blue);}
+.slot.slot-taken{background:var(--surface2);color:var(--muted);cursor:not-allowed;text-decoration:line-through;opacity:.5;}
+.slot.slot-selected{background:var(--blue);color:white;border-color:var(--blue);}
+.slots-legend{display:flex;gap:16px;margin-top:8px;font-size:.72rem;color:var(--muted);}
+.slots-legend span{display:flex;align-items:center;gap:5px;}
+.slots-legend .dot{width:10px;height:10px;border-radius:50%;}
+.dot-free{background:var(--blue);}
+.dot-taken{background:var(--muted);}
+.dot-sel{background:var(--green);}
+
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;}
+
+/* ── DOSSIER ── */
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.info-item{background:var(--surface2);border-radius:10px;padding:12px 16px;}
+.info-label{font-size:.7rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+.info-value{font-size:.88rem;font-weight:600;}
+
+/* ── ORDONNANCES ── */
+.ordo-card{background:white;border:1.5px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:12px;}
+.ordo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.ordo-date{font-size:.78rem;color:var(--muted);}
+.ordo-med-list{display:flex;flex-wrap:wrap;gap:8px;}
+.ordo-pill{background:rgba(23,86,200,.08);color:var(--blue);border:1px solid rgba(23,86,200,.15);border-radius:20px;padding:4px 12px;font-size:.75rem;font-weight:600;}
+
+/* ── MODAL CONFIRMATION ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeModal .2s ease;}
+@keyframes fadeModal{from{opacity:0;}to{opacity:1;}}
+.modal{background:white;border-radius:18px;padding:28px 32px;width:400px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.18);}
+.modal h3{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;margin-bottom:8px;}
+.modal p{font-size:.84rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--dark);color:white;padding:12px 20px;border-radius:12px;font-size:.83rem;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:none;}
+.toast.success{border-left:4px solid var(--green);}
+.toast.error{border-left:4px solid var(--red);}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <img src="medgest.png" alt="logo" width="50px"/>
+    <div class="brand-name">Med<span>Gest</span></div>
+  </div>
+  <div class="role-badge"><span style="font-size:1rem;">🧑</span><span class="role-text">Patient</span></div>
+  <nav class="nav">
+    <div class="nav-section">Mon espace</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-ico">🏠</span>Accueil</div>
+    <div class="nav-section">Rendez-vous</div>
+    <div class="nav-item" onclick="showPage('mes-rdv',this)"><span class="nav-ico">📅</span>Mes rendez-vous</div>
+    <div class="nav-item" onclick="showPage('prendre-rdv',this)"><span class="nav-ico">➕</span>Prendre un RDV</div>
+    <div class="nav-section">Santé</div>
+    <div class="nav-item" onclick="showPage('dossier',this)"><span class="nav-ico">🗂️</span>Mon dossier médical</div>
+    <div class="nav-item" onclick="showPage('ordonnances',this)"><span class="nav-ico">💊</span>Mes ordonnances</div>
+    <div class="nav-section">Compte</div>
+    <div class="nav-item" onclick="showPage('profil',this)"><span class="nav-ico">👤</span>Mon profil</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar">AB</div>
+      <div><div class="user-name">Ahmed Belhaj</div><div class="user-role">PAT-00001</div></div>
+      <button class="logout-btn" onclick="window.location='login.html'">↩</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="page-title">Accueil</h2>
+      <div class="breadcrumb" id="page-bread">MedGest › Espace patient</div>
+    </div>
+    <!-- TÂCHE 1 : Bouton notifications fonctionnel avec compteur et panneau déroulant -->
+    <div class="topbar-right">
+      <div class="notif-wrap">
+        <div class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+          🔔
+          <!-- Compteur dynamique -->
+          <div class="notif-count hidden" id="notif-count">0</div>
+        </div>
+        <!-- Panneau déroulant des notifications -->
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-panel-header">
+            <h4>Notifications</h4>
+            <button onclick="markAllRead()">Tout marquer lu</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <!-- Généré dynamiquement par renderNotifs() -->
+          </div>
+          <div class="notif-panel-footer">
+            <small>Les notifications sont mises à jour en temps réel.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════════════════════
+         DASHBOARD
+         ══════════════════════════════════════════════ -->
+    <div class="page active" id="p-dashboard">
+      <div class="welcome-card">
+        <div class="welcome-text">
+          <h3>Bonjour, Ahmed 👋</h3>
+          <p>Votre espace santé personnel — rendez-vous, dossiers et ordonnances.</p>
+        </div>
+        <div class="next-rdv">
+          <div class="next-rdv-ico">📅</div>
+          <div class="next-rdv-info">
+            <div class="next-rdv-label">Prochain rendez-vous</div>
+            <div class="next-rdv-val">Lundi 13 Avr. — 08:30</div>
+            <div class="next-rdv-sub">Dr. Karim Mansouri · Cardiologie · Salle 101</div>
+          </div>
+          <span class="rdv-tag">Dans 2h</span>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">📅</div></div><div class="stat-val" id="dash-rdv-count">3</div><div class="stat-lbl">RDV à venir</div></div>
+        <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">✅</div></div><div class="stat-val">12</div><div class="stat-lbl">Consultations totales</div></div>
+        <div class="stat-card indigo"><div class="stat-top"><div class="stat-icon indigo">💊</div></div><div class="stat-val">2</div><div class="stat-lbl">Ordonnances actives</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><h3>Prochains rendez-vous</h3><button class="btn-sm btn-primary" onclick="showPage('prendre-rdv',null)">+ Nouveau</button></div>
+          <table>
+            <thead><tr><th>Date</th><th>Médecin</th><th>Motif</th><th>Statut</th></tr></thead>
+            <tbody id="dash-rdv-table"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Dernières ordonnances</h3><button class="btn-sm btn-outline" onclick="showPage('ordonnances',null)">Voir tout</button></div>
+          <div style="padding:16px 20px;">
+            <div class="ordo-card">
+              <div class="ordo-header"><strong style="font-size:.84rem;">Dr. Mansouri</strong><span class="ordo-date">10/04/2026</span></div>
+              <div class="ordo-med-list"><span class="ordo-pill">Amlodipine 5mg</span><span class="ordo-pill">Ramipril 5mg</span></div>
+            </div>
+            <div class="ordo-card">
+              <div class="ordo-header"><strong style="font-size:.84rem;">Dr. Mansouri</strong><span class="ordo-date">01/03/2026</span></div>
+              <div class="ordo-med-list"><span class="ordo-pill">Aspirine 100mg</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         MES RDV — TÂCHE 6 : Bouton "Annuler" sur confirmé + en attente
+         ══════════════════════════════════════════════ -->
+    <div class="page" id="p-mes-rdv">
+      <div class="section-header">
+        <div class="section-title">Mes rendez-vous</div>
+        <button class="btn-sm btn-primary" onclick="showPage('prendre-rdv',null)">+ Prendre un RDV</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Historique complet</h3></div>
+        <table>
+          <thead><tr><th>Date & Heure</th><th>Médecin</th><th>Spécialité</th><th>Motif</th><th>Statut</th><th>Action</th></tr></thead>
+          <!-- TÂCHE 6 : Tableau généré dynamiquement — bouton Annuler sur confirmé & en attente -->
+          <tbody id="rdv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         PRENDRE RDV
+         TÂCHE 2 : Listes dépendantes spécialité → médecin
+         TÂCHE 3 : Boutons Annuler / Envoyer fonctionnels
+         TÂCHE 4 : Créneaux selon disponibilité médecin
+         ══════════════════════════════════════════════ -->
+    <div class="page" id="p-prendre-rdv">
+      <div class="section-header"><div class="section-title">Prendre un rendez-vous</div></div>
+      <div class="card">
+        <div class="card-header"><h3>Choisir votre médecin et votre créneau</h3></div>
+        <div style="padding:20px;">
+          <form id="rdv-form" onsubmit="submitRdv(event)" novalidate>
+
+            <!-- TÂCHE 2 : Liste 1 — Spécialités -->
+            <div class="select-row">
+              <div class="field">
+                <label>Spécialité <span style="color:var(--red)">*</span></label>
+                <select id="sel-specialite" onchange="onSpecialiteChange()" required>
+                  <option value="">-- Choisir une spécialité --</option>
+                </select>
+              </div>
+              <!-- TÂCHE 2 : Liste 2 — Médecins filtrés selon spécialité -->
+              <div class="field">
+                <label>Médecin <span style="color:var(--red)">*</span></label>
+                <select id="sel-medecin" onchange="onMedecinChange()" required disabled>
+                  <option value="">-- Choisir d'abord une spécialité --</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- TÂCHE 4 : Date disponible selon le médecin -->
+            <div class="select-row">
+              <div class="field">
+                <label>Date souhaitée <span style="color:var(--red)">*</span></label>
+                <input type="date" id="rdv-date" onchange="renderSlots()" required
+                       min="" />
+                <div id="date-hint" style="font-size:.72rem;color:var(--muted);margin-top:4px;">
+                  Sélectionnez un médecin pour voir les disponibilités.
+                </div>
+              </div>
+              <div class="field">
+                <label>Motif de la consultation <span style="color:var(--red)">*</span></label>
+                <input id="rdv-motif" placeholder="Décrivez brièvement votre motif..." required/>
+              </div>
+            </div>
+
+            <!-- TÂCHE 4 : Créneaux horaires dynamiques -->
+            <div class="field" id="slots-section" style="display:none;">
+              <label>Créneau horaire <span style="color:var(--red)">*</span></label>
+              <div class="slots-grid" id="slots-grid"></div>
+              <div class="slots-legend">
+                <span><span class="dot dot-free" style="background:var(--border);border:1.5px solid var(--blue);"></span>Disponible</span>
+                <span><span class="dot dot-taken"></span>Indisponible</span>
+                <span><span class="dot" style="background:var(--blue);"></span>Sélectionné</span>
+              </div>
+              <div id="slot-error" style="font-size:.72rem;color:var(--red);margin-top:6px;display:none;">
+                Veuillez sélectionner un créneau disponible.
+              </div>
+            </div>
+
+            <!-- Boutons TÂCHE 3 -->
+            <div class="form-actions">
+              <button type="button" class="btn-sm btn-outline" onclick="cancelRdvForm()">Annuler</button>
+              <button type="submit" class="btn-sm btn-primary">Envoyer la demande</button>
+            </div>
+          </form>
+
+          <div style="margin-top:16px;padding:12px 16px;background:rgba(23,86,200,.05);border-radius:10px;border-left:3px solid var(--blue);font-size:.8rem;color:var(--muted);">
+            ℹ️ Votre demande sera confirmée par la secrétaire dans les 24h. Vous recevrez une notification.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         DOSSIER MEDICAL
+         TÂCHE 7 : "Médecin traitant" supprimé
+         ══════════════════════════════════════════════ -->
+    <div class="page" id="p-dossier">
+      <div class="section-header"><div class="section-title">Mon dossier médical</div></div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><h3>Informations personnelles</h3></div>
+        <div style="padding:20px;">
+          <!-- TÂCHE 7 : Champ "Médecin traitant" supprimé de la grille -->
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">Nom complet</div><div class="info-value">Ahmed Belhaj</div></div>
+            <div class="info-item"><div class="info-label">Date de naissance</div><div class="info-value">12/03/1985</div></div>
+            <div class="info-item"><div class="info-label">Sexe</div><div class="info-value">Masculin</div></div>
+            <div class="info-item"><div class="info-label">Groupe sanguin</div><div class="info-value">O+</div></div>
+            <!-- "Médecin traitant" était ici — supprimé (TÂCHE 7) -->
+            <div class="info-item"><div class="info-label">Allergies</div><div class="info-value" style="color:#dc2626;">⚠️ Pénicilline</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Historique des consultations</h3></div>
+        <table>
+          <thead><tr><th>Date</th><th>Médecin</th><th>Diagnostic</th><th>Traitement</th></tr></thead>
+          <tbody>
+            <tr><td>10/04/2026</td><td>Dr. Mansouri</td><td>HTA stade 1 — stable</td><td>Amlodipine 5mg/j, Ramipril 5mg/j</td></tr>
+            <tr><td>05/02/2026</td><td>Dr. Mansouri</td><td>Bilan cardio — normal</td><td>Aspirine 100mg/j</td></tr>
+            <tr><td>10/01/2026</td><td>Dr. Mansouri</td><td>Douleurs thoraciques — bénignes</td><td>Repos, contrôle dans 1 mois</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         ORDONNANCES
+         TÂCHE 5 : Bouton "Télécharger PDF" supprimé
+         ══════════════════════════════════════════════ -->
+    <div class="page" id="p-ordonnances">
+      <div class="section-header"><div class="section-title">Mes ordonnances</div></div>
+      <div class="card">
+        <div class="card-header"><h3>Toutes les ordonnances</h3></div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:12px;">
+
+          <!-- TÂCHE 5 : Le bouton "📥 Télécharger PDF" a été supprimé de chaque carte ordonnance -->
+          <div class="ordo-card" style="border:1.5px solid rgba(39,168,74,.2);">
+            <div class="ordo-header">
+              <div><strong>Dr. Karim Mansouri</strong> — Cardiologie</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="ordo-date">10/04/2026</span>
+                <span class="badge confirmed">Active</span>
+              </div>
+            </div>
+            <div class="ordo-med-list">
+              <span class="ordo-pill">Amlodipine 5mg · 1×/j</span>
+              <span class="ordo-pill">Ramipril 5mg · 1×/j</span>
+            </div>
+            <!-- Bouton PDF supprimé (TÂCHE 5) -->
+          </div>
+
+          <div class="ordo-card" style="border:1.5px solid rgba(39,168,74,.2);">
+            <div class="ordo-header">
+              <div><strong>Dr. Karim Mansouri</strong> — Cardiologie</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="ordo-date">01/03/2026</span>
+                <span class="badge confirmed">Active</span>
+              </div>
+            </div>
+            <div class="ordo-med-list">
+              <span class="ordo-pill">Aspirine 100mg · 1×/j</span>
+            </div>
+            <!-- Bouton PDF supprimé (TÂCHE 5) -->
+          </div>
+
+          <div class="ordo-card">
+            <div class="ordo-header">
+              <div><strong>Dr. Karim Mansouri</strong> — Cardiologie</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="ordo-date">10/11/2025</span>
+                <span class="badge done">Expirée</span>
+              </div>
+            </div>
+            <div class="ordo-med-list">
+              <span class="ordo-pill" style="opacity:.5;">Bisoprolol 2.5mg · 1×/j</span>
+            </div>
+            <!-- Bouton PDF supprimé (TÂCHE 5) -->
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+         PROFIL
+         TÂCHE 8 : Champ "Changer le mot de passe" supprimé
+         ══════════════════════════════════════════════ -->
+    <div class="page" id="p-profil">
+      <div class="section-header">
+        <div class="section-title">Mon profil</div>
+        <button class="btn-sm btn-primary" onclick="saveProfile()">Enregistrer</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Informations personnelles</h3></div>
+        <div style="padding:20px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="field"><label>Prénom</label><input id="prof-prenom" value="Ahmed"/></div>
+            <div class="field"><label>Nom</label><input id="prof-nom" value="Belhaj"/></div>
+            <div class="field"><label>Téléphone</label><input id="prof-tel" value="+216 22 345 678"/></div>
+            <div class="field"><label>Email</label><input id="prof-email" type="email" value="ahmed.belhaj@email.com"/></div>
+            <!-- TÂCHE 8 : Champ "Changer le mot de passe" supprimé -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /shell -->
+
+<!-- ═══════════════ MODAL CONFIRMATION (TÂCHE 6) ═══════════════ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h3 id="modal-title">Annuler le rendez-vous</h3>
+    <p id="modal-msg">Êtes-vous sûr de vouloir annuler ce rendez-vous ? Cette action est irréversible.</p>
+    <div class="modal-actions">
+      <button class="btn-sm btn-outline" onclick="closeModal()">Non, garder</button>
+      <button class="btn-sm btn-red" onclick="executeCancel()">Oui, annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+/* ─────────────────────────────────────────
+   NAVIGATION
+   ───────────────────────────────────────── */
+const pagesMeta = {
+  dashboard:    {title:'Accueil',                 bread:'MedGest › Espace patient'},
+  'mes-rdv':    {title:'Mes rendez-vous',          bread:'MedGest › Rendez-vous'},
+  'prendre-rdv':{title:'Prendre un rendez-vous',  bread:'MedGest › RDV › Nouveau'},
+  dossier:      {title:'Mon dossier médical',      bread:'MedGest › Dossier médical'},
+  ordonnances:  {title:'Mes ordonnances',          bread:'MedGest › Ordonnances'},
+  profil:       {title:'Mon profil',               bread:'MedGest › Profil'},
+};
+
+function showPage(id, navItem) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const p = document.getElementById('p-' + id);
+  if (p) p.classList.add('active');
+  const cfg = pagesMeta[id] || {title: id, bread: 'MedGest'};
+  document.getElementById('page-title').textContent = cfg.title;
+  document.getElementById('page-bread').textContent = cfg.bread;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navItem) navItem.classList.add('active');
+  // Ferme le panneau notifications si ouvert
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+/* ─────────────────────────────────────────
+   TOAST
+   ───────────────────────────────────────── */
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3500);
+}
+
+/* ─────────────────────────────────────────
+   TÂCHE 1 : NOTIFICATIONS DYNAMIQUES
+   ───────────────────────────────────────── */
+let notifications = [
+  {id:1, ico:'✅', text:'Votre RDV du 13/04 à 08:30 est confirmé.', time:'il y a 10 min', read:false},
+  {id:2, ico:'📅', text:'Rappel : RDV demain avec Dr. Mansouri à 08:30.', time:'il y a 1h', read:false},
+  {id:3, ico:'💊', text:'Nouvelle ordonnance disponible dans votre dossier.', time:'il y a 3h', read:true},
+];
+let notifIdCounter = 4;
+
+function renderNotifs() {
+  const list   = document.getElementById('notif-list');
+  const count  = document.getElementById('notif-count');
+  const unread = notifications.filter(n => !n.read).length;
+
+  // Met à jour le compteur
+  if (unread > 0) {
+    count.textContent = unread > 9 ? '9+' : unread;
+    count.classList.remove('hidden');
+  } else {
+    count.classList.add('hidden');
+  }
+
+  // Génère les items
+  if (notifications.length === 0) {
+    list.innerHTML = '<div style="padding:16px 18px;font-size:.82rem;color:var(--muted);">Aucune notification.</div>';
+    return;
+  }
+  list.innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="markRead(${n.id})">
+      <div class="notif-ico">${n.ico}</div>
+      <div class="notif-body">
+        <p>${n.text}</p>
+        <small>${n.time}</small>
+      </div>
+    </div>`).join('');
+}
+
+function toggleNotif() {
+  const panel = document.getElementById('notif-panel');
+  panel.classList.toggle('open');
+  renderNotifs();
+}
+
+function markRead(id) {
+  const n = notifications.find(x => x.id === id);
+  if (n) n.read = true;
+  renderNotifs();
+}
+
+function markAllRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifs();
+}
+
+/* Ajoute une notification système */
+function pushNotif(ico, text) {
+  notifications.unshift({id: notifIdCounter++, ico, text, time: 'à l\'instant', read: false});
+  renderNotifs();
+}
+
+/* Ferme panneau si clic hors */
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.notif-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('notif-panel').classList.remove('open');
+  }
+});
+
+/* ─────────────────────────────────────────
+   DONNÉES : Médecins + disponibilités
+   TÂCHE 2 & 4
+   ───────────────────────────────────────── */
+// Structure : par spécialité, liste de médecins avec leurs créneaux pris
+const medecinData = {
+  'Cardiologie': [
+    {
+      id: 'med1', nom: 'Dr. K. Mansouri',
+      // Créneaux pris par date (YYYY-MM-DD) : liste des heures occupées
+      taken: {
+        '2026-04-14': ['08:00','09:00','14:00'],
+        '2026-04-15': ['10:00','11:00'],
+        '2026-04-20': ['08:00','09:00','10:00','11:00'],
+      }
+    }
+  ],
+  'Pédiatrie': [
+    {
+      id: 'med2', nom: 'Dr. L. Triki',
+      taken: {
+        '2026-04-14': ['09:00','10:00'],
+        '2026-04-16': ['08:00','14:00','15:00'],
+      }
+    }
+  ],
+  'Neurologie': [
+    {
+      id: 'med3', nom: 'Dr. Y. Chaari',
+      taken: {
+        '2026-04-15': ['11:00'],
+        '2026-04-17': ['08:00','09:00','10:00','11:00','14:00','15:00'], // journée pleine
+      }
+    }
+  ],
+  'Dermatologie': [
+    {
+      id: 'med4', nom: 'Dr. S. Haddad',
+      taken: {}
+    }
+  ],
+  'Gynécologie': [
+    {
+      id: 'med5', nom: 'Dr. R. Belkasem',
+      taken: {
+        '2026-04-14': ['08:00','09:00'],
+      }
+    }
+  ],
+};
+
+// Tous les créneaux possibles dans la journée
+const ALL_SLOTS = ['08:00','09:00','10:00','11:00','14:00','15:00','16:00'];
+
+// Variable pour le créneau sélectionné
+let selectedSlot = null;
+
+/* Peuple la liste des spécialités */
+function initSpecialites() {
+  const sel = document.getElementById('sel-specialite');
+  Object.keys(medecinData).forEach(spec => {
+    const o = document.createElement('option');
+    o.value = o.textContent = spec;
+    sel.appendChild(o);
+  });
+}
+
+/* TÂCHE 2 : Quand on change de spécialité, filtre les médecins */
+function onSpecialiteChange() {
+  const spec     = document.getElementById('sel-specialite').value;
+  const medSel   = document.getElementById('sel-medecin');
+  const slotsSec = document.getElementById('slots-section');
+
+  // Réinitialise
+  medSel.innerHTML = '<option value="">-- Choisir un médecin --</option>';
+  slotsSec.style.display = 'none';
+  selectedSlot = null;
+  document.getElementById('rdv-date').value = '';
+
+  if (!spec) {
+    medSel.disabled = true;
+    document.getElementById('date-hint').textContent = 'Sélectionnez un médecin pour voir les disponibilités.';
+    return;
+  }
+
+  // Remplit la liste des médecins de cette spécialité
+  medecinData[spec].forEach(med => {
+    const o = document.createElement('option');
+    o.value = med.id;
+    o.textContent = med.nom;
+    medSel.appendChild(o);
+  });
+  medSel.disabled = false;
+
+  // Si un seul médecin, le sélectionne automatiquement
+  if (medecinData[spec].length === 1) {
+    medSel.value = medecinData[spec][0].id;
+    onMedecinChange();
+  }
+}
+
+/* TÂCHE 4 : Quand on change de médecin, met à jour le hint de date */
+function onMedecinChange() {
+  const medId = document.getElementById('sel-medecin').value;
+  const dateInput = document.getElementById('rdv-date');
+  const hint = document.getElementById('date-hint');
+
+  if (!medId) {
+    hint.textContent = 'Sélectionnez un médecin pour voir les disponibilités.';
+    document.getElementById('slots-section').style.display = 'none';
+    return;
+  }
+
+  // Date min = aujourd'hui
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.min = today;
+  hint.textContent = 'Choisissez une date pour afficher les créneaux disponibles.';
+
+  // Si une date est déjà saisie, recharge les créneaux
+  if (dateInput.value) renderSlots();
+  else document.getElementById('slots-section').style.display = 'none';
+}
+
+/* TÂCHE 4 : Affiche les créneaux selon la disponibilité du médecin et la date */
+function renderSlots() {
+  const spec    = document.getElementById('sel-specialite').value;
+  const medId   = document.getElementById('sel-medecin').value;
+  const date    = document.getElementById('rdv-date').value;
+  const section = document.getElementById('slots-section');
+  const grid    = document.getElementById('slots-grid');
+
+  if (!medId || !date) { section.style.display = 'none'; return; }
+
+  // Trouve le médecin
+  const med = (medecinData[spec] || []).find(m => m.id === medId);
+  if (!med) { section.style.display = 'none'; return; }
+
+  const takenToday = med.taken[date] || [];
+  selectedSlot = null; // réinitialise la sélection
+
+  section.style.display = 'block';
+  grid.innerHTML = ALL_SLOTS.map(h => {
+    const isTaken = takenToday.includes(h);
+    return `<div class="slot ${isTaken ? 'slot-taken' : ''}"
+                 onclick="${isTaken ? '' : `selectSlot(this,'${h}')`}"
+                 title="${isTaken ? 'Créneau indisponible' : 'Disponible'}">
+              ${h}
+            </div>`;
+  }).join('');
+
+  document.getElementById('slot-error').style.display = 'none';
+}
+
+/* Sélectionne un créneau disponible */
+function selectSlot(el, heure) {
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('slot-selected'));
+  el.classList.add('slot-selected');
+  selectedSlot = heure;
+  document.getElementById('slot-error').style.display = 'none';
+}
+
+/* ─────────────────────────────────────────
+   DONNÉES RDV (état partagé)
+   ───────────────────────────────────────── */
+let rdvList = [
+  {id:1, date:'13/04', heure:'08:30', medecin:'Dr. K. Mansouri', specialite:'Cardiologie', motif:'Suivi tension',      statut:'confirmed'},
+  {id:2, date:'20/04', heure:'10:00', medecin:'Dr. K. Mansouri', specialite:'Cardiologie', motif:'ECG',                statut:'pending'},
+  {id:3, date:'05/05', heure:'09:15', medecin:'Dr. K. Mansouri', specialite:'Cardiologie', motif:'Résultats labo',     statut:'pending'},
+  {id:4, date:'05/02', heure:'09:00', medecin:'Dr. K. Mansouri', specialite:'Cardiologie', motif:'Bilan annuel',       statut:'done'},
+  {id:5, date:'10/01', heure:'11:30', medecin:'Dr. K. Mansouri', specialite:'Cardiologie', motif:'Douleurs thoraciques',statut:'done'},
+  {id:6, date:'15/12', heure:'08:00', medecin:'Dr. K. Mansouri', specialite:'Cardiologie', motif:'Suivi ordonnance',   statut:'cancelled'},
+];
+let rdvIdCounter = 7;
+
+const statutLabels = {
+  confirmed: '<span class="badge confirmed">Confirmé</span>',
+  pending:   '<span class="badge pending">En attente</span>',
+  done:      '<span class="badge done">Terminé</span>',
+  cancelled: '<span class="badge cancelled">Annulé</span>',
+};
+
+/* ─────────────────────────────────────────
+   RENDU TABLE MES RDV — TÂCHE 6
+   ───────────────────────────────────────── */
+function renderRdvTable() {
+  const tbody = document.getElementById('rdv-tbody');
+  tbody.innerHTML = rdvList.map(r => {
+    // TÂCHE 6 : Bouton "Annuler" uniquement pour confirmed et pending
+    const canCancel = r.statut === 'confirmed' || r.statut === 'pending';
+    const action = canCancel
+      ? `<button class="btn-sm btn-red" style="padding:3px 10px;font-size:.7rem;"
+               onclick="openCancelModal(${r.id})">Annuler</button>`
+      : '—';
+    return `
+      <tr>
+        <td>${r.date} ${r.heure}</td>
+        <td>${r.medecin}</td>
+        <td>${r.specialite}</td>
+        <td>${r.motif}</td>
+        <td>${statutLabels[r.statut]}</td>
+        <td>${action}</td>
+      </tr>`;
+  }).join('');
+}
+
+/* Rendu du mini-tableau dashboard */
+function renderDashTable() {
+  const upcoming = rdvList.filter(r => r.statut === 'confirmed' || r.statut === 'pending');
+  document.getElementById('dash-rdv-count').textContent = upcoming.length;
+  document.getElementById('dash-rdv-table').innerHTML = upcoming.slice(0, 3).map(r => `
+    <tr>
+      <td>${r.date} ${r.heure}</td>
+      <td>${r.medecin.replace('Dr. K. ','Dr. ')}</td>
+      <td>${r.motif}</td>
+      <td>${statutLabels[r.statut]}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px;">Aucun RDV à venir</td></tr>';
+}
+
+/* ─────────────────────────────────────────
+   TÂCHE 6 : ANNULER UN RDV avec confirmation
+   ───────────────────────────────────────── */
+let cancelTargetId = null;
+
+function openCancelModal(id) {
+  cancelTargetId = id;
+  const r = rdvList.find(x => x.id === id);
+  document.getElementById('modal-msg').textContent =
+    `Êtes-vous sûr de vouloir annuler le RDV du ${r.date} à ${r.heure} avec ${r.medecin} (${r.motif}) ?`;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  cancelTargetId = null;
+}
+
+function executeCancel() {
+  if (!cancelTargetId) return;
+  const r = rdvList.find(x => x.id === cancelTargetId);
+  if (r) {
+    r.statut = 'cancelled';
+    renderRdvTable();
+    renderDashTable();
+    showToast(`RDV du ${r.date} annulé avec succès.`, 'success');
+    // TÂCHE 1 : notification automatique après annulation
+    pushNotif('❌', `Votre RDV du ${r.date} à ${r.heure} avec ${r.medecin} a été annulé.`);
+  }
+  closeModal();
+}
+
+/* ─────────────────────────────────────────
+   TÂCHE 3 : FORMULAIRE PRENDRE RDV
+   ───────────────────────────────────────── */
+
+/* Bouton "Annuler" — réinitialise le formulaire */
+function cancelRdvForm() {
+  document.getElementById('rdv-form').reset();
+  document.getElementById('sel-medecin').disabled = true;
+  document.getElementById('sel-medecin').innerHTML = '<option value="">-- Choisir d\'abord une spécialité --</option>';
+  document.getElementById('slots-section').style.display = 'none';
+  document.getElementById('date-hint').textContent = 'Sélectionnez un médecin pour voir les disponibilités.';
+  selectedSlot = null;
+  showPage('mes-rdv', null);
+}
+
+/* Bouton "Envoyer la demande" — valide et enregistre le RDV */
+function submitRdv(e) {
+  e.preventDefault();
+  const spec   = document.getElementById('sel-specialite').value;
+  const medId  = document.getElementById('sel-medecin').value;
+  const date   = document.getElementById('rdv-date').value;
+  const motif  = document.getElementById('rdv-motif').value.trim();
+
+  // Validation de base
+  if (!spec || !medId || !date || !motif) {
+    showToast('Veuillez remplir tous les champs obligatoires.', 'error');
+    return;
+  }
+
+  // TÂCHE 4 : Vérification qu'un créneau a été sélectionné
+  if (!selectedSlot) {
+    document.getElementById('slot-error').style.display = 'block';
+    showToast('Veuillez sélectionner un créneau disponible.', 'error');
+    return;
+  }
+
+  // Trouve le nom du médecin
+  const med = (medecinData[spec] || []).find(m => m.id === medId);
+  const nomMed = med ? med.nom : medId;
+
+  // Formate la date en DD/MM
+  const [y, mo, d] = date.split('-');
+  const dateStr = `${d}/${mo}`;
+
+  // Ajoute le RDV
+  rdvList.unshift({
+    id: rdvIdCounter++,
+    date: dateStr,
+    heure: selectedSlot,
+    medecin: nomMed,
+    specialite: spec,
+    motif,
+    statut: 'pending',
+  });
+
+  // TÂCHE 4 : Marque le créneau comme pris pour ce médecin à cette date
+  if (med) {
+    if (!med.taken[date]) med.taken[date] = [];
+    med.taken[date].push(selectedSlot);
+  }
+
+  renderRdvTable();
+  renderDashTable();
+
+  // TÂCHE 1 : Notification automatique après prise de RDV
+  pushNotif('📅', `Demande de RDV envoyée au ${dateStr} à ${selectedSlot} avec ${nomMed} (${spec}).`);
+
+  showToast('Demande de RDV envoyée ! Confirmation sous 24h.', 'success');
+
+  // Réinitialise le formulaire
+  cancelRdvForm();
+  showPage('mes-rdv', null);
+}
+
+/* ─────────────────────────────────────────
+   PROFIL — sauvegarde
+   ───────────────────────────────────────── */
+function saveProfile() {
+  const prenom = document.getElementById('prof-prenom').value.trim();
+  const nom    = document.getElementById('prof-nom').value.trim();
+  if (!prenom || !nom) { showToast('Prénom et nom obligatoires.', 'error'); return; }
+  showToast('Profil mis à jour avec succès !', 'success');
+}
+
+/* ─────────────────────────────────────────
+   INITIALISATION
+   ───────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  initSpecialites();   // Peuple les spécialités
+  renderRdvTable();    // Rendu tableau mes RDV
+  renderDashTable();   // Rendu mini-tableau dashboard
+  renderNotifs();      // Affiche les notifications initiales
+});
+</script>
+</body>
+</html>
