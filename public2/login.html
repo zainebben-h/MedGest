@@ -259,15 +259,15 @@
     if(!pwd){showAlert('Veuillez entrer votre mot de passe.');shakeInput('password');return;}
     btn.classList.add('loading'); btn.disabled = true;
     try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: id, motDePasse: pwd })
+        body: JSON.stringify({ email: id, password: pwd })
     });
 
   const data = await response.json();
 
-  if (data.success) {
+  if (data.token) {
     // Save token & role
     localStorage.setItem('token', data.token);
     localStorage.setItem('role', data.role);

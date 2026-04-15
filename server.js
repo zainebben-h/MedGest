@@ -1,35 +1,32 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import authRoutes from './routes/authRoutes.js';
+// File: server.js (add this line after authRoutes)
+import patientRoutes from './routes/patientRoutes.js';
+// File: server.js (add this line after patientRoutes)
+import rdvRoutes from './routes/rdvRoutes.js';
+import salleRoutes from './routes/salleRoutes.js';
+import medecinRoutes from './routes/medecinRoutes.js';
+import consultationRoutes from './routes/consultationRoutes.js';
 
-const patientRoutes = require('./routes/patients');
-app.use('/api/patients', patientRoutes);
-app.use('/api/models', require('./routes/models'));
-app.use('/api/rendezVous', require('./routes/rendezVous'));
-app.use('/api/utilisateurs', require('./routes/utilisateurs'));
+
+
+
+
+dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use('/api/auth', authRoutes);
+app.use('/api/patients', patientRoutes);
+app.use('/api/rdv', rdvRoutes);
+app.use('/api/salles', salleRoutes);
+app.use('/api/medecins', medecinRoutes);
+app.use('/api/consultations', consultationRoutes);
 
-// Connexion à MongoDB
-mongoose.connect('mongodb://localhost:27017/medgest')
-  .then(() => console.log('Connecté à MongoDB'))
-  .catch(err => console.error('Erreur de connexion à MongoDB', err));
-
-// Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/patients', require('./routes/patients'));
-app.use('/api/rendezVous', require('./routes/rendezVous'));
-
-// Démarrer le serveur
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur http://localhost:3000`);
+app.listen(5000, () => {
+  console.log(`MedGest backend running on http://localhost:5000`);
 });
-app.use(express.static('public'));
-app.use('/api/utilisateurs', require('./routes/utilisateurs'));
