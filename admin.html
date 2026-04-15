@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MedGest — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Sora:wght@700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --blue:#1756C8;--blue-lt:#2d72e8;--blue-glow:rgba(23,86,200,.18);
+  --green:#27a84a;--green-lt:#34c75e;
+  --red:#dc2626;--red-lt:#ef4444;
+  --dark:#0b1220;--surface:#ffffff;--surface2:#f5f8ff;
+  --border:#e2eaf7;--text:#0f1b2d;--muted:#7a8aaa;
+  --sidebar-w:240px;
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--surface2);color:var(--text);}
+
+/* LAYOUT */
+.shell{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--dark);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+.sidebar-brand{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:12px;}
+.brand-logo{width:42px;height:42px;object-fit:contain;}
+.brand-name{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:800;color:white;letter-spacing:-.2px;}
+.brand-name span{color:var(--green-lt);}
+.role-badge{margin:16px 20px;background:rgba(23,86,200,.2);border:1px solid rgba(23,86,200,.35);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;}
+.role-badge .ico{font-size:1rem;}
+.role-badge .role-text{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.8);letter-spacing:.5px;text-transform:uppercase;}
+.nav{flex:1;padding:8px 12px;overflow-y:auto;}
+.nav-section{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:1px;text-transform:uppercase;padding:16px 8px 8px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.55);font-size:.85rem;font-weight:500;transition:all .2s;margin-bottom:2px;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);}
+.nav-item.active{background:linear-gradient(135deg,rgba(23,86,200,.4),rgba(39,168,74,.2));color:white;border:1px solid rgba(23,86,200,.3);}
+.nav-item .nav-ico{font-size:1rem;width:20px;text-align:center;}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.07);}
+.user-info{display:flex;align-items:center;gap:10px;}
+.avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:white;flex-shrink:0;}
+.user-name{font-size:.83rem;font-weight:600;color:white;}
+.user-role{font-size:.7rem;color:rgba(255,255,255,.35);}
+.logout-btn{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.3);font-size:.75rem;padding:4px 8px;border-radius:6px;transition:all .2s;}
+.logout-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);}
+
+/* MAIN */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left h2{font-family:'Sora',sans-serif;font-size:1.15rem;font-weight:800;color:var(--text);}
+.topbar-left .breadcrumb{font-size:.75rem;color:var(--muted);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+
+/* ── TÂCHE 4 : Suppression de la barre de recherche dans la topbar ── */
+/* La .search-box a été retirée du HTML de la topbar */
+
+/* NOTIFICATION BUTTON */
+.notif-btn{width:38px;height:38px;border-radius:10px;background:var(--surface2);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.95rem;position:relative;transition:all .2s;}
+.notif-btn:hover{border-color:var(--blue);}
+.notif-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--green);border-radius:50%;border:2px solid white;}
+
+/* ── TÂCHE 5 : Panneau de notifications ── */
+.notif-panel{position:absolute;top:54px;right:0;width:320px;background:white;border:1.5px solid var(--border);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.12);z-index:200;display:none;overflow:hidden;}
+.notif-panel.open{display:block;animation:fadeUp .2s ease;}
+.notif-panel-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.notif-panel-header h4{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;}
+.notif-panel-header button{font-size:.72rem;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;}
+.notif-list{max-height:300px;overflow-y:auto;}
+.notif-item{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;transition:background .15s;}
+.notif-item:hover{background:var(--surface2);}
+.notif-item:last-child{border-bottom:none;}
+.notif-item.unread{background:rgba(23,86,200,.04);}
+.notif-ico{font-size:1.1rem;flex-shrink:0;margin-top:2px;}
+.notif-body{flex:1;}
+.notif-body p{font-size:.8rem;color:var(--text);line-height:1.4;}
+.notif-body small{font-size:.7rem;color:var(--muted);}
+.notif-panel-footer{padding:10px 18px;text-align:center;border-top:1px solid var(--border);}
+.notif-panel-footer button{font-size:.78rem;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;}
+.notif-wrap{position:relative;}
+
+/* CONTENT */
+.content{padding:28px 32px;flex:1;}
+.page{display:none;}
+.page.active{display:block;animation:fadeUp .3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:white;border:1.5px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(23,86,200,.1);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.blue::before{background:linear-gradient(90deg,var(--blue),var(--blue-lt));}
+.stat-card.green::before{background:linear-gradient(90deg,var(--green),var(--green-lt));}
+.stat-card.orange::before{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.stat-card.purple::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa);}
+.stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+.stat-icon.blue{background:rgba(23,86,200,.1);}
+.stat-icon.green{background:rgba(39,168,74,.1);}
+.stat-icon.orange{background:rgba(245,158,11,.1);}
+.stat-icon.purple{background:rgba(139,92,246,.1);}
+.stat-trend{font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:20px;}
+.stat-trend.up{background:rgba(39,168,74,.1);color:var(--green);}
+.stat-trend.down{background:rgba(220,38,38,.1);color:#dc2626;}
+.stat-val{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;color:var(--text);line-height:1;}
+.stat-lbl{font-size:.78rem;color:var(--muted);font-weight:500;margin-top:4px;}
+
+/* SECTION HEADER */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--text);}
+.btn-sm{padding:7px 16px;border-radius:8px;font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:var(--blue);color:white;}
+.btn-primary:hover{background:var(--blue-lt);}
+.btn-outline{background:white;color:var(--blue);border:1.5px solid var(--blue);}
+.btn-outline:hover{background:rgba(23,86,200,.06);}
+
+/* ── TÂCHE 7 : Bouton supprimer (rouge) ── */
+.btn-danger{background:white;color:var(--red);border:1.5px solid var(--red);padding:4px 10px;font-size:.7rem;}
+.btn-danger:hover{background:rgba(220,38,38,.06);}
+
+/* TABLE */
+.card{background:white;border:1.5px solid var(--border);border-radius:16px;overflow:hidden;}
+.card-header{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.card-header h3{font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:11px 20px;font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;}
+tbody td{padding:13px 20px;font-size:.84rem;border-bottom:1px solid var(--border);color:var(--text);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:#fafbff;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;letter-spacing:.3px;}
+.badge.actif{background:rgba(39,168,74,.1);color:var(--green);}
+.badge.inactif{background:rgba(220,38,38,.1);color:#dc2626;}
+.badge.admin-role{background:rgba(23,86,200,.12);color:var(--blue);}
+.badge.medecin-role{background:rgba(16,185,129,.12);color:#059669;}
+.badge.sec-role{background:rgba(245,158,11,.12);color:#d97706;}
+
+/* TWO COLS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+
+/* ── TÂCHE 2 : Champs obligatoires — style label avec astérisque ── */
+.field label .req{color:var(--red);margin-right:2px;font-size:.8rem;}
+.field-error{font-size:.72rem;color:var(--red);margin-top:4px;display:none;}
+.field input.invalid,.field select.invalid{border-color:var(--red);box-shadow:0 0 0 3px rgba(220,38,38,.12);}
+
+/* FORM PAGE */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:7px;}
+.field input,.field select,.field textarea{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.87rem;color:var(--text);background:var(--surface2);outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px var(--blue-glow);}
+.field textarea{resize:vertical;min-height:80px;}
+.field-full{grid-column:1/-1;}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px;}
+
+/* ── TÂCHE 1 : Champ spécialité — caché par défaut ── */
+#field-specialite{display:none;}
+
+/* STATS BAR */
+.stat-bar-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.stat-bar-item:last-child{border-bottom:none;}
+.stat-bar-label{font-size:.82rem;font-weight:500;width:120px;flex-shrink:0;}
+.stat-bar-track{flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.stat-bar-fill{height:100%;border-radius:4px;transition:width .8s ease;}
+.stat-bar-fill.blue{background:linear-gradient(90deg,var(--blue),var(--blue-lt));}
+.stat-bar-fill.green{background:linear-gradient(90deg,var(--green),var(--green-lt));}
+.stat-bar-fill.orange{background:linear-gradient(90deg,#f59e0b,#fbbf24);}
+.stat-bar-num{font-size:.8rem;font-weight:700;color:var(--text);width:40px;text-align:right;}
+
+/* ── TÂCHE 7 : Filtre rôle personnel ── */
+.filter-bar{display:flex;gap:8px;align-items:center;}
+.filter-btn{padding:6px 14px;border-radius:20px;font-size:.75rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--muted);transition:all .2s;}
+.filter-btn.active-filter{background:var(--blue);color:white;border-color:var(--blue);}
+.filter-btn:hover:not(.active-filter){border-color:var(--blue);color:var(--blue);}
+
+/* ── TÂCHE 5 : MODAL DE CONFIRMATION ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:none;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;animation:fadeModal .2s ease;}
+@keyframes fadeModal{from{opacity:0;}to{opacity:1;}}
+.modal{background:white;border-radius:18px;padding:28px 32px;width:420px;max-width:95vw;box-shadow:0 24px 60px rgba(0,0,0,.18);}
+.modal h3{font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;margin-bottom:8px;}
+.modal p{font-size:.84rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── TÂCHE 10 : Profil ── */
+.profile-avatar-big{width:80px;height:80px;border-radius:18px;background:linear-gradient(135deg,var(--blue),var(--green));display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:800;color:white;margin-bottom:16px;}
+
+/* ── TÂCHE 11 : Réseaux sociaux ── */
+.social-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.social-ico{font-size:1.2rem;width:28px;text-align:center;flex-shrink:0;}
+.social-label{font-size:.78rem;font-weight:600;width:90px;flex-shrink:0;}
+
+/* ── Toast notification ── */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--dark);color:white;padding:12px 20px;border-radius:12px;font-size:.83rem;font-weight:500;z-index:999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:none;}
+.toast.success{border-left:4px solid var(--green);}
+.toast.error{border-left:4px solid var(--red);}
+
+/* Paramètres tabs */
+.param-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:2px solid var(--border);padding-bottom:0;}
+.param-tab{padding:9px 18px;font-size:.82rem;font-weight:600;cursor:pointer;border:none;background:none;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.param-tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+.param-section{display:none;}
+.param-section.active{display:block;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- SIDEBAR -->
+<!-- ── TÂCHE 10 : "Patients" supprimé, "Profil" ajouté ── -->
+<!-- ── TÂCHE 6  : "Vue générale" et "Statistiques" fusionnées ── -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <img src="medgest.png" alt="logo" width="50px"/>
+    <div class="brand-name">Med<span>Gest</span></div>
+  </div>
+  <div class="role-badge"><span class="ico">🛡️</span><span class="role-text">Administrateur</span></div>
+  <nav class="nav">
+    <div class="nav-section">Tableau de bord</div>
+    <!-- Fusion : un seul item "Tableau de bord" remplace "Vue générale" + "Statistiques" -->
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nav-ico">📊</span>Tableau de bord</div>
+    <div class="nav-section">Gestion</div>
+    <div class="nav-item" onclick="showPage('personnels',this)"><span class="nav-ico">👥</span>Personnels</div>
+    <!-- "Patients" supprimé (TÂCHE 10) -->
+    <div class="nav-item" onclick="showPage('salles',this)"><span class="nav-ico">🏠</span>Salles</div>
+    <div class="nav-section">Système</div>
+    <!-- "Profil" ajouté (TÂCHE 10) -->
+    <div class="nav-item" onclick="showPage('profil',this)"><span class="nav-ico">👤</span>Profil</div>
+    <div class="nav-item" onclick="showPage('parametres',this)"><span class="nav-ico">⚙️</span>Paramètres</div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="avatar">AD</div>
+      <div><div class="user-name" id="sidebar-name">Admin Principal</div><div class="user-role" id="sidebar-email">admin@medgest.tn</div></div>
+      <button class="logout-btn" onclick="window.location='login.html'">↩</button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2 id="page-title">Tableau de bord</h2>
+      <div class="breadcrumb" id="page-bread">MedGest › Administration</div>
+    </div>
+    <!-- TÂCHE 4 : Barre de recherche supprimée — seul le bouton notification reste -->
+    <div class="topbar-right">
+      <!-- TÂCHE 5 : Bouton notification avec panneau dynamique -->
+      <div class="notif-wrap">
+        <div class="notif-btn" id="notif-btn" onclick="toggleNotif()">
+          🔔
+          <div class="notif-dot" id="notif-dot"></div>
+        </div>
+        <!-- Panneau de notifications -->
+        <div class="notif-panel" id="notif-panel">
+          <div class="notif-panel-header">
+            <h4>Notifications</h4>
+            <button onclick="markAllRead()">Tout marquer lu</button>
+          </div>
+          <div class="notif-list" id="notif-list">
+            <!-- Les notifications sont générées dynamiquement par JS -->
+          </div>
+          <div class="notif-panel-footer">
+            <button onclick="addDemoNotif()">+ Simuler une notification</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════════════════════════════════════════════════════
+         TÂCHE 6 : Fusion "Vue générale" + "Statistiques"
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page active" id="p-dashboard">
+      <!-- Bloc KPIs -->
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">👥</div><span class="stat-trend up">▲ 8%</span></div><div class="stat-val">24</div><div class="stat-lbl">Personnels actifs</div></div>
+        <div class="stat-card orange"><div class="stat-top"><div class="stat-icon orange">📅</div><span class="stat-trend up">▲ 5%</span></div><div class="stat-val">47</div><div class="stat-lbl">RDV aujourd'hui</div></div>
+        <div class="stat-card purple"><div class="stat-top"><div class="stat-icon purple">🏠</div><span class="stat-trend down">▼ 2%</span></div><div class="stat-val">8</div><div class="stat-lbl">Salles disponibles</div></div>
+        <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">✅</div><span class="stat-trend up">▲ 3%</span></div><div class="stat-val">94%</div><div class="stat-lbl">Taux de satisfaction</div></div>
+      </div>
+
+      <!-- Activité + Répartition côte à côte -->
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><h3>Activité récente</h3><span style="font-size:.75rem;color:var(--muted)">Aujourd'hui</span></div>
+          <div style="padding:16px 20px;">
+            <div class="stat-bar-item"><span class="stat-bar-label">Consultations</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:75%"></div></div><span class="stat-bar-num">38</span></div>
+            <div class="stat-bar-item"><span class="stat-bar-label">RDV confirmés</span><div class="stat-bar-track"><div class="stat-bar-fill green" style="width:60%"></div></div><span class="stat-bar-num">47</span></div>
+            <div class="stat-bar-item"><span class="stat-bar-label">RDV annulés</span><div class="stat-bar-track"><div class="stat-bar-fill orange" style="width:15%"></div></div><span class="stat-bar-num">6</span></div>
+            <div class="stat-bar-item"><span class="stat-bar-label">Nouveaux patients</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:20%"></div></div><span class="stat-bar-num">4</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Répartition par rôle</h3></div>
+          <div style="padding:16px 20px;">
+            <div class="stat-bar-item"><span class="stat-bar-label">Médecins</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:50%"></div></div><span class="stat-bar-num">12</span></div>
+            <div class="stat-bar-item"><span class="stat-bar-label">Secrétaires</span><div class="stat-bar-track"><div class="stat-bar-fill green" style="width:25%"></div></div><span class="stat-bar-num">6</span></div>
+            <div class="stat-bar-item"><span class="stat-bar-label">Admins</span><div class="stat-bar-track"><div class="stat-bar-fill orange" style="width:12%"></div></div><span class="stat-bar-num">3</span></div>
+            <div class="stat-bar-item"><span class="stat-bar-label">Autres</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:12%"></div></div><span class="stat-bar-num">3</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Statistiques intégrées en bas du tableau de bord ── -->
+      <div style="margin-top:24px;">
+        <div class="section-title" style="margin-bottom:16px;">📈 Statistiques générales</div>
+        <div class="stats-grid">
+          <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">📊</div></div><div class="stat-val">1 284</div><div class="stat-lbl">Consultations ce mois</div></div>
+          <div class="stat-card orange"><div class="stat-top"><div class="stat-icon orange">⏱️</div></div><div class="stat-val">18min</div><div class="stat-lbl">Temps moyen attente</div></div>
+          <div class="stat-card purple"><div class="stat-top"><div class="stat-icon purple">💊</div></div><div class="stat-val">342</div><div class="stat-lbl">Prescriptions émises</div></div>
+          <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">🏥</div></div><div class="stat-val">14</div><div class="stat-lbl">Salles au total</div></div>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><h3>Consultations par spécialité</h3></div>
+            <div style="padding:16px 20px;">
+              <div class="stat-bar-item"><span class="stat-bar-label">Cardiologie</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:80%"></div></div><span class="stat-bar-num">320</span></div>
+              <div class="stat-bar-item"><span class="stat-bar-label">Pédiatrie</span><div class="stat-bar-track"><div class="stat-bar-fill green" style="width:60%"></div></div><span class="stat-bar-num">248</span></div>
+              <div class="stat-bar-item"><span class="stat-bar-label">Neurologie</span><div class="stat-bar-track"><div class="stat-bar-fill orange" style="width:45%"></div></div><span class="stat-bar-num">186</span></div>
+              <div class="stat-bar-item"><span class="stat-bar-label">Général</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:35%"></div></div><span class="stat-bar-num">130</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Tendance mensuelle</h3></div>
+            <div style="padding:16px 20px;">
+              <div class="stat-bar-item"><span class="stat-bar-label">Janvier</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:65%"></div></div><span class="stat-bar-num">980</span></div>
+              <div class="stat-bar-item"><span class="stat-bar-label">Février</span><div class="stat-bar-track"><div class="stat-bar-fill blue" style="width:70%"></div></div><span class="stat-bar-num">1050</span></div>
+              <div class="stat-bar-item"><span class="stat-bar-label">Mars</span><div class="stat-bar-track"><div class="stat-bar-fill green" style="width:85%"></div></div><span class="stat-bar-num">1284</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PERSONNELS — TÂCHES 7, 8
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page" id="p-personnels">
+      <div class="section-header">
+        <div class="section-title">Gestion des personnels</div>
+        <button class="btn-sm btn-primary" onclick="openAddPersonnel()">+ Ajouter</button>
+      </div>
+
+      <!-- TÂCHE 7 : Filtre par rôle -->
+      <div class="filter-bar" style="margin-bottom:16px;">
+        <button class="filter-btn active-filter" onclick="filterPersonnel('tous',this)">Tous</button>
+        <button class="filter-btn" onclick="filterPersonnel('Médecin',this)">Médecins</button>
+        <button class="filter-btn" onclick="filterPersonnel('Secrétaire',this)">Secrétaires</button>
+        <button class="filter-btn" onclick="filterPersonnel('Autre',this)">Autres</button>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h3>Liste du personnel (<span id="personnel-count">5</span>)</h3></div>
+        <table>
+          <thead>
+            <tr><th>Nom</th><th>Rôle</th><th>Spécialité</th><th>Identifiant</th><th>Statut</th><th>Actions</th></tr>
+          </thead>
+          <!-- TÂCHE 7/8 : Tableau généré dynamiquement par JS -->
+          <tbody id="personnel-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         AJOUTER PERSONNEL — TÂCHES 1, 2, 3
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page" id="p-add-personnel">
+      <div class="section-header">
+        <div class="section-title">Ajouter un personnel</div>
+        <button class="btn-sm btn-outline" onclick="showPage('personnels',null)">← Retour</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Informations du compte</h3></div>
+        <div style="padding:20px;">
+          <form id="add-form" onsubmit="submitAddPersonnel(event)" novalidate>
+            <div class="form-grid">
+
+              <!-- TÂCHE 2 : Astérisques sur tous les champs obligatoires -->
+              <div class="field">
+                <label><span class="req">*</span>Prénom</label>
+                <input id="f-prenom" name="prenom" placeholder="Prénom" required/>
+                <div class="field-error" id="err-prenom">Ce champ est obligatoire.</div>
+              </div>
+
+              <div class="field">
+                <label><span class="req">*</span>Nom</label>
+                <input id="f-nom" name="nom" placeholder="Nom de famille" required/>
+                <div class="field-error" id="err-nom">Ce champ est obligatoire.</div>
+              </div>
+
+              <!-- TÂCHE 1 : Rôle — déclenche l'affichage de la spécialité -->
+              <div class="field">
+                <label><span class="req">*</span>Rôle</label>
+                <select id="f-role" name="role" required onchange="toggleSpecialite(this.value)">
+                  <option value="">-- Choisir un rôle --</option>
+                  <option value="Médecin">Médecin</option>
+                  <option value="Secrétaire">Secrétaire</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Autre">Autre</option>
+                </select>
+                <div class="field-error" id="err-role">Ce champ est obligatoire.</div>
+              </div>
+
+              <!-- TÂCHE 1 : Champ Spécialité — visible uniquement si rôle = Médecin -->
+              <div class="field" id="field-specialite">
+                <label><span class="req">*</span>Spécialité</label>
+                <select id="f-specialite" name="specialite">
+                  <option value="">-- Choisir --</option>
+                  <option value="Cardiologie">Cardiologie</option>
+                  <option value="Dermatologie">Dermatologie</option>
+                  <option value="Endocrinologie">Endocrinologie</option>
+                  <option value="Gastro-entérologie">Gastro-entérologie</option>
+                  <option value="Gynécologie">Gynécologie</option>
+                  <option value="Médecine générale">Médecine générale</option>
+                  <option value="Neurologie">Neurologie</option>
+                  <option value="Oncologie">Oncologie</option>
+                  <option value="Ophtalmologie">Ophtalmologie</option>
+                  <option value="Orthopédie">Orthopédie</option>
+                  <option value="ORL">ORL</option>
+                  <option value="Pédiatrie">Pédiatrie</option>
+                  <option value="Pneumologie">Pneumologie</option>
+                  <option value="Psychiatrie">Psychiatrie</option>
+                  <option value="Radiologie">Radiologie</option>
+                  <option value="Rhumatologie">Rhumatologie</option>
+                  <option value="Urologie">Urologie</option>
+                </select>
+                <div class="field-error" id="err-specialite">Ce champ est obligatoire pour un médecin.</div>
+              </div>
+
+              <div class="field">
+                <label><span class="req">*</span>Email</label>
+                <input id="f-email" name="email" type="email" placeholder="email@medgest.tn" required/>
+                <div class="field-error" id="err-email">Adresse e-mail invalide.</div>
+              </div>
+
+              <div class="field">
+                <label><span class="req">*</span>Téléphone</label>
+                <input id="f-tel" name="tel" placeholder="+216 XX XXX XXX" required/>
+                <div class="field-error" id="err-tel">Ce champ est obligatoire.</div>
+              </div>
+
+              <div class="field field-full">
+                <label><span class="req">*</span>Mot de passe temporaire</label>
+                <input id="f-mdp" name="mdp" type="password" placeholder="••••••••" required/>
+                <div class="field-error" id="err-mdp">Ce champ est obligatoire (min. 6 caractères).</div>
+              </div>
+
+            </div>
+            <!-- TÂCHE 3 : Annuler réinitialise le formulaire ; Créer enregistre -->
+            <div class="form-actions">
+              <button type="button" class="btn-sm btn-outline" onclick="cancelAddForm()">Annuler</button>
+              <button type="submit" class="btn-sm btn-primary">Créer le compte</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         MODIFIER PERSONNEL — TÂCHE 8
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page" id="p-edit-personnel">
+      <div class="section-header">
+        <div class="section-title">Modifier un personnel</div>
+        <button class="btn-sm btn-outline" onclick="showPage('personnels',null)">← Retour</button>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Modifier les informations</h3></div>
+        <div style="padding:20px;">
+          <!-- TÂCHE 8 : Formulaire pré-rempli via openEditPersonnel() -->
+          <form id="edit-form" onsubmit="submitEditPersonnel(event)" novalidate>
+            <input type="hidden" id="edit-index"/>
+            <div class="form-grid">
+              <div class="field">
+                <label><span class="req">*</span>Prénom</label>
+                <input id="ef-prenom" required/>
+                <div class="field-error" id="eerr-prenom">Ce champ est obligatoire.</div>
+              </div>
+              <div class="field">
+                <label><span class="req">*</span>Nom</label>
+                <input id="ef-nom" required/>
+                <div class="field-error" id="eerr-nom">Ce champ est obligatoire.</div>
+              </div>
+              <div class="field">
+                <label><span class="req">*</span>Rôle</label>
+                <select id="ef-role" required onchange="toggleEditSpecialite(this.value)">
+                  <option value="Médecin">Médecin</option>
+                  <option value="Secrétaire">Secrétaire</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div class="field" id="edit-field-specialite">
+                <label><span class="req">*</span>Spécialité</label>
+                <select id="ef-specialite">
+                  <option value="">-- Choisir --</option>
+                  <option>Cardiologie</option><option>Dermatologie</option>
+                  <option>Endocrinologie</option><option>Gastro-entérologie</option>
+                  <option>Gynécologie</option><option>Médecine générale</option>
+                  <option>Neurologie</option><option>Oncologie</option>
+                  <option>Ophtalmologie</option><option>Orthopédie</option>
+                  <option>ORL</option><option>Pédiatrie</option>
+                  <option>Pneumologie</option><option>Psychiatrie</option>
+                  <option>Radiologie</option><option>Rhumatologie</option>
+                  <option>Urologie</option>
+                </select>
+              </div>
+              <div class="field">
+                <label><span class="req">*</span>Email</label>
+                <input id="ef-email" type="email" required/>
+              </div>
+              <div class="field">
+                <label><span class="req">*</span>Téléphone</label>
+                <input id="ef-tel" required/>
+              </div>
+              <div class="field field-full">
+                <label>Statut</label>
+                <select id="ef-statut">
+                  <option value="Actif">Actif</option>
+                  <option value="Inactif">Inactif</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-sm btn-outline" onclick="showPage('personnels',null)">Annuler</button>
+              <button type="submit" class="btn-sm btn-primary">Sauvegarder</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         SALLES — TÂCHE 9 : Suppression de salle avec confirmation
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page" id="p-salles">
+      <div class="section-header">
+        <div class="section-title">Planning des salles</div>
+        <button class="btn-sm btn-primary" onclick="openAddSalle()">+ Ajouter salle</button>
+      </div>
+      <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card green"><div class="stat-top"><div class="stat-icon green">🟢</div></div><div class="stat-val" id="salles-dispo">2</div><div class="stat-lbl">Disponibles</div></div>
+        <div class="stat-card orange"><div class="stat-top"><div class="stat-icon orange">🟡</div></div><div class="stat-val" id="salles-occ">1</div><div class="stat-lbl">Occupées</div></div>
+        <div class="stat-card blue"><div class="stat-top"><div class="stat-icon blue">🔵</div></div><div class="stat-val" id="salles-maint">0</div><div class="stat-lbl">En maintenance</div></div>
+        <div class="stat-card purple"><div class="stat-top"><div class="stat-icon purple">🏠</div></div><div class="stat-val" id="salles-total">3</div><div class="stat-lbl">Total</div></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <table>
+          <thead><tr><th>Salle</th><th>Type</th><th>Capacité</th><th>Statut</th><th>Médecin assigné</th><th>Actions</th></tr></thead>
+          <tbody id="salles-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PROFIL — TÂCHE 10
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page" id="p-profil">
+      <div class="section-title" style="margin-bottom:20px;">Mon profil</div>
+      <div class="card">
+        <div class="card-header"><h3>Informations personnelles</h3></div>
+        <div style="padding:24px;">
+          <div class="profile-avatar-big" id="profile-avatar-ico">AD</div>
+          <div class="form-grid">
+            <div class="field">
+              <label><span class="req">*</span>Prénom</label>
+              <input id="prof-prenom" value="Admin"/>
+            </div>
+            <div class="field">
+              <label><span class="req">*</span>Nom</label>
+              <input id="prof-nom" value="Principal"/>
+            </div>
+            <div class="field">
+              <label><span class="req">*</span>Email</label>
+              <input id="prof-email" type="email" value="admin@medgest.tn"/>
+            </div>
+            <div class="field">
+              <label>Téléphone</label>
+              <input id="prof-tel" value="+216 71 000 000"/>
+            </div>
+            <div class="field field-full">
+              <label>Nouveau mot de passe <small style="color:var(--muted);font-weight:400">(laisser vide pour ne pas changer)</small></label>
+              <input id="prof-mdp" type="password" placeholder="••••••••"/>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-sm btn-primary" onclick="saveProfile()">Enregistrer les modifications</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════
+         PARAMÈTRES — TÂCHE 11 : Réseaux sociaux ajoutés
+         ══════════════════════════════════════════════════════════ -->
+    <div class="page" id="p-parametres">
+      <div class="section-title" style="margin-bottom:16px;">Paramètres système</div>
+
+      <!-- Onglets paramètres -->
+      <div class="param-tabs">
+        <button class="param-tab active" onclick="switchParamTab('clinique',this)">🏥 Clinique</button>
+        <button class="param-tab" onclick="switchParamTab('sociaux',this)">🌐 Réseaux sociaux</button>
+      </div>
+
+      <!-- Onglet 1 : Clinique -->
+      <div class="param-section active" id="ptab-clinique">
+        <div class="card">
+          <div class="card-header"><h3>Informations de la clinique</h3></div>
+          <div style="padding:20px;">
+            <div class="form-grid">
+              <div class="field"><label>Nom de la clinique</label><input id="param-nom" value="Clinique MedGest"/></div>
+              <div class="field"><label>Téléphone principal</label><input id="param-tel" value="+216 71 234 567"/></div>
+              <div class="field field-full"><label>Adresse</label><input id="param-adr" value="15, Rue des Médecins, Tunis 1002"/></div>
+              <div class="field"><label>Email de contact</label><input id="param-email" type="email" value="contact@medgest.tn"/></div>
+              <div class="field"><label>Site web</label><input id="param-web" value="www.medgest.tn"/></div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-sm btn-primary" onclick="saveParams()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TÂCHE 11 : Onglet Réseaux sociaux -->
+      <div class="param-section" id="ptab-sociaux">
+        <div class="card">
+          <div class="card-header">
+            <h3>Réseaux sociaux</h3>
+            <span style="font-size:.75rem;color:var(--muted)">Ces liens apparaissent dans les communications officielles</span>
+          </div>
+          <div style="padding:20px;">
+            <div id="social-list">
+              <!-- Lignes générées dynamiquement -->
+            </div>
+            <div class="form-actions" style="margin-top:0;">
+              <button class="btn-sm btn-outline" onclick="addSocialRow()">+ Ajouter un réseau</button>
+              <button class="btn-sm btn-primary" onclick="saveSocials()">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div><!-- /shell -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL CONFIRMATION (suppression / actions critiques)
+     ══════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <h3 id="modal-title">Confirmer la suppression</h3>
+    <p id="modal-message">Êtes-vous sûr de vouloir effectuer cette action ? Cette opération est irréversible.</p>
+    <div class="modal-actions">
+      <button class="btn-sm btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn-sm" id="modal-confirm-btn" style="background:var(--red);color:white;"
+              onclick="executeConfirm()">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal ajout salle -->
+<div class="modal-overlay" id="salle-modal">
+  <div class="modal">
+    <h3>Ajouter une salle</h3>
+    <div class="field" style="margin-top:12px;">
+      <label><span class="req">*</span>Nom de la salle</label>
+      <input id="new-salle-nom" placeholder="Ex: Salle 301"/>
+    </div>
+    <div class="field">
+      <label><span class="req">*</span>Type</label>
+      <select id="new-salle-type">
+        <option value="Consultation">Consultation</option>
+        <option value="Opération">Opération</option>
+        <option value="Urgence">Urgence</option>
+        <option value="Radiologie">Radiologie</option>
+      </select>
+    </div>
+    <div class="field">
+      <label><span class="req">*</span>Capacité</label>
+      <input id="new-salle-cap" placeholder="Ex: 2 pers."/>
+    </div>
+    <div class="field">
+      <label>Médecin assigné</label>
+      <input id="new-salle-med" placeholder="Ex: Dr. Nom"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm btn-outline" onclick="document.getElementById('salle-modal').classList.remove('open')">Annuler</button>
+      <button class="btn-sm btn-primary" onclick="submitAddSalle()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT GLOBAL
+     ══════════════════════════════════════════════════════════ -->
+<script>
+/* ───────────────────────────────────────────────
+   NAVIGATION
+   ─────────────────────────────────────────────── */
+const pages = {
+  dashboard:       {title:'Tableau de bord',        bread:'MedGest › Administration'},
+  personnels:      {title:'Gestion des personnels', bread:'MedGest › Personnels'},
+  'add-personnel': {title:'Ajouter un personnel',   bread:'MedGest › Personnels › Ajouter'},
+  'edit-personnel':{title:'Modifier un personnel',  bread:'MedGest › Personnels › Modifier'},
+  salles:          {title:'Planning des salles',     bread:'MedGest › Salles'},
+  profil:          {title:'Mon profil',              bread:'MedGest › Profil'},
+  parametres:      {title:'Paramètres',              bread:'MedGest › Paramètres'},
+};
+
+function showPage(id, navItem) {
+  // Désactive toutes les pages
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const p = document.getElementById('p-' + id);
+  if (p) p.classList.add('active');
+
+  // Met à jour le titre + breadcrumb
+  const cfg = pages[id] || {title: id, bread: 'MedGest'};
+  document.getElementById('page-title').textContent = cfg.title;
+  document.getElementById('page-bread').textContent = cfg.bread;
+
+  // Met à jour le nav actif (seulement si venu d'un clic sidebar)
+  if (navItem) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    navItem.classList.add('active');
+  }
+
+  // Ferme le panneau de notifications si ouvert
+  document.getElementById('notif-panel').classList.remove('open');
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 5 : NOTIFICATIONS DYNAMIQUES
+   ─────────────────────────────────────────────── */
+let notifications = [
+  {id:1, ico:'👤', text:'Nouveau personnel ajouté : Dr. Youssef Chaari', time:'il y a 5 min', read:false},
+  {id:2, ico:'📅', text:'47 rendez-vous confirmés pour aujourd\'hui', time:'il y a 20 min', read:false},
+  {id:3, ico:'🏠', text:'Salle 102 passée en statut "Occupée"', time:'il y a 1h', read:true},
+  {id:4, ico:'⚠️', text:'Mehdi Saad marqué inactif', time:'hier', read:true},
+];
+let notifCounter = 5;
+
+function renderNotifs() {
+  const list = document.getElementById('notif-list');
+  const dot  = document.getElementById('notif-dot');
+  const unread = notifications.filter(n => !n.read).length;
+  dot.style.display = unread > 0 ? 'block' : 'none';
+
+  list.innerHTML = notifications.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}" onclick="readNotif(${n.id})">
+      <div class="notif-ico">${n.ico}</div>
+      <div class="notif-body">
+        <p>${n.text}</p>
+        <small>${n.time}</small>
+      </div>
+    </div>
+  `).join('') || '<div style="padding:16px 18px;font-size:.82rem;color:var(--muted)">Aucune notification</div>';
+}
+
+function toggleNotif() {
+  document.getElementById('notif-panel').classList.toggle('open');
+  renderNotifs();
+}
+
+function readNotif(id) {
+  const n = notifications.find(x => x.id === id);
+  if (n) n.read = true;
+  renderNotifs();
+}
+
+function markAllRead() {
+  notifications.forEach(n => n.read = true);
+  renderNotifs();
+}
+
+// Ferme le panneau si on clique ailleurs
+document.addEventListener('click', e => {
+  const wrap = document.querySelector('.notif-wrap');
+  if (!wrap.contains(e.target)) {
+    document.getElementById('notif-panel').classList.remove('open');
+  }
+});
+
+/* Simule une nouvelle notification (bouton dans le footer du panneau) */
+function addDemoNotif() {
+  const demos = [
+    {ico:'✅', text:'Consultation terminée - Dr. Triki'},
+    {ico:'🆕', text:'Nouveau patient enregistré : Ali Hamdi'},
+    {ico:'🔔', text:'Rappel : réunion d\'équipe à 15h'},
+    {ico:'💊', text:'Prescription émise par Dr. Mansouri'},
+  ];
+  const d = demos[Math.floor(Math.random() * demos.length)];
+  notifications.unshift({id: notifCounter++, ico: d.ico, text: d.text, time: 'à l\'instant', read: false});
+  renderNotifs();
+  showToast('Nouvelle notification reçue', 'success');
+}
+
+/* ───────────────────────────────────────────────
+   TOAST
+   ─────────────────────────────────────────────── */
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 1 : Affichage dynamique du champ spécialité (formulaire ajout)
+   ─────────────────────────────────────────────── */
+function toggleSpecialite(role) {
+  const field = document.getElementById('field-specialite');
+  const sel   = document.getElementById('f-specialite');
+  if (role === 'Médecin') {
+    field.style.display = 'block';
+    sel.required = true;
+  } else {
+    field.style.display = 'none';
+    sel.required = false;
+    sel.value = '';
+  }
+}
+
+/* Même logique pour le formulaire de modification */
+function toggleEditSpecialite(role) {
+  const field = document.getElementById('edit-field-specialite');
+  const sel   = document.getElementById('ef-specialite');
+  if (role === 'Médecin') {
+    field.style.display = 'block';
+    sel.required = true;
+  } else {
+    field.style.display = 'none';
+    sel.required = false;
+    sel.value = '';
+  }
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 2 & 3 : VALIDATION FORMULAIRE AJOUT
+   ─────────────────────────────────────────────── */
+function validateField(id, errId, condition) {
+  const el  = document.getElementById(id);
+  const err = document.getElementById(errId);
+  if (!condition(el.value)) {
+    el.classList.add('invalid');
+    if (err) err.style.display = 'block';
+    return false;
+  }
+  el.classList.remove('invalid');
+  if (err) err.style.display = 'none';
+  return true;
+}
+
+function submitAddPersonnel(e) {
+  e.preventDefault();
+  let valid = true;
+  valid &= validateField('f-prenom',  'err-prenom',  v => v.trim() !== '');
+  valid &= validateField('f-nom',     'err-nom',     v => v.trim() !== '');
+  valid &= validateField('f-role',    'err-role',    v => v !== '');
+  valid &= validateField('f-email',   'err-email',   v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+  valid &= validateField('f-tel',     'err-tel',     v => v.trim() !== '');
+  valid &= validateField('f-mdp',     'err-mdp',     v => v.length >= 6);
+
+  const role = document.getElementById('f-role').value;
+  if (role === 'Médecin') {
+    valid &= validateField('f-specialite', 'err-specialite', v => v !== '');
+  }
+
+  if (!valid) {
+    showToast('Veuillez remplir tous les champs obligatoires.', 'error');
+    return;
+  }
+
+  /* Génère un identifiant automatique */
+  const roleMap = {Médecin:'MED', Secrétaire:'SEC', Admin:'ADM', Autre:'AUT'};
+  const prefix  = roleMap[role] || 'USR';
+  const newId   = prefix + '-' + String(personnels.length + 1).padStart(5, '0');
+
+  personnels.push({
+    prenom:     document.getElementById('f-prenom').value.trim(),
+    nom:        document.getElementById('f-nom').value.trim(),
+    role:       role,
+    specialite: role === 'Médecin' ? document.getElementById('f-specialite').value : '—',
+    email:      document.getElementById('f-email').value.trim(),
+    tel:        document.getElementById('f-tel').value.trim(),
+    id:         newId,
+    statut:     'Actif',
+  });
+
+  renderPersonnelTable();
+  addNotifFromSystem(`👤 Nouveau personnel ajouté : ${document.getElementById('f-prenom').value} ${document.getElementById('f-nom').value}`);
+  showToast('Personnel créé avec succès !', 'success');
+  document.getElementById('add-form').reset();
+  toggleSpecialite('');
+  showPage('personnels', null);
+}
+
+/* TÂCHE 3 : Bouton Annuler — réinitialise le formulaire */
+function cancelAddForm() {
+  document.getElementById('add-form').reset();
+  // Cache le champ spécialité après réinitialisation
+  document.getElementById('field-specialite').style.display = 'none';
+  // Efface les erreurs de validation
+  document.querySelectorAll('.field-error').forEach(e => e.style.display = 'none');
+  document.querySelectorAll('.field input.invalid, .field select.invalid')
+    .forEach(e => e.classList.remove('invalid'));
+  showPage('personnels', null);
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 7 & 8 : DONNÉES PERSONNELS + RENDU TABLE
+   ─────────────────────────────────────────────── */
+let personnels = [
+  {prenom:'Karim',   nom:'Mansouri', role:'Médecin',    specialite:'Cardiologie', email:'k.mansouri@medgest.tn', tel:'+216 21 000 001', id:'MED-00001', statut:'Actif'},
+  {prenom:'Sonia',   nom:'Ben Ali',  role:'Secrétaire', specialite:'—',           email:'s.benali@medgest.tn',   tel:'+216 21 000 002', id:'SEC-00001', statut:'Actif'},
+  {prenom:'Leila',   nom:'Triki',    role:'Médecin',    specialite:'Pédiatrie',   email:'l.triki@medgest.tn',    tel:'+216 21 000 003', id:'MED-00002', statut:'Actif'},
+  {prenom:'Mehdi',   nom:'Saad',     role:'Secrétaire', specialite:'—',           email:'m.saad@medgest.tn',     tel:'+216 21 000 004', id:'SEC-00002', statut:'Inactif'},
+  {prenom:'Youssef', nom:'Chaari',   role:'Médecin',    specialite:'Neurologie',  email:'y.chaari@medgest.tn',   tel:'+216 21 000 005', id:'MED-00003', statut:'Actif'},
+];
+
+const roleClassMap = {Médecin:'medecin-role', Secrétaire:'sec-role', Admin:'admin-role', Autre:'sec-role'};
+
+let currentFilter = 'tous';
+
+/* Rendu complet du tableau selon le filtre actif */
+function renderPersonnelTable(filter) {
+  if (filter !== undefined) currentFilter = filter;
+  const list = currentFilter === 'tous'
+    ? personnels
+    : personnels.filter(p => {
+        if (currentFilter === 'Autre') return p.role !== 'Médecin' && p.role !== 'Secrétaire' && p.role !== 'Admin';
+        return p.role === currentFilter;
+      });
+
+  const tbody = document.getElementById('personnel-tbody');
+  tbody.innerHTML = list.map((p, idx) => {
+    // On cherche l'index réel dans le tableau original
+    const realIdx = personnels.indexOf(p);
+    const roleClass = roleClassMap[p.role] || 'admin-role';
+    const statutClass = p.statut === 'Actif' ? 'actif' : 'inactif';
+    return `
+      <tr>
+        <td><strong>${p.prenom} ${p.nom}</strong></td>
+        <td><span class="badge ${roleClass}">${p.role}</span></td>
+        <td>${p.specialite}</td>
+        <td>${p.id}</td>
+        <td><span class="badge ${statutClass}">${p.statut}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-sm btn-outline" style="padding:4px 10px;font-size:.7rem;"
+                  onclick="openEditPersonnel(${realIdx})">Modifier</button>
+          <button class="btn-sm btn-danger"
+                  onclick="confirmDeletePersonnel(${realIdx})">Supprimer</button>
+        </td>
+      </tr>`;
+  }).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;">Aucun personnel dans cette catégorie.</td></tr>`;
+
+  document.getElementById('personnel-count').textContent = list.length;
+}
+
+/* TÂCHE 7 : Filtre */
+function filterPersonnel(role, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
+  btn.classList.add('active-filter');
+  renderPersonnelTable(role);
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 7 : SUPPRESSION PERSONNEL avec confirmation
+   ─────────────────────────────────────────────── */
+let pendingAction = null; // stocke la fonction à exécuter après confirmation
+
+function confirmDeletePersonnel(idx) {
+  const p = personnels[idx];
+  document.getElementById('modal-title').textContent = 'Supprimer le personnel';
+  document.getElementById('modal-message').textContent =
+    `Êtes-vous sûr de vouloir supprimer "${p.prenom} ${p.nom}" (${p.id}) ? Cette action est irréversible.`;
+  document.getElementById('modal-confirm-btn').textContent = 'Supprimer';
+  pendingAction = () => {
+    personnels.splice(idx, 1);
+    renderPersonnelTable();
+    showToast(`${p.prenom} ${p.nom} supprimé avec succès.`, 'success');
+    addNotifFromSystem(`🗑️ Personnel supprimé : ${p.prenom} ${p.nom}`);
+  };
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function executeConfirm() {
+  if (typeof pendingAction === 'function') pendingAction();
+  pendingAction = null;
+  closeModal();
+}
+
+function closeModal() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  document.getElementById('salle-modal').classList.remove('open');
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 8 : MODIFIER PERSONNEL
+   ─────────────────────────────────────────────── */
+function openEditPersonnel(idx) {
+  const p = personnels[idx];
+  document.getElementById('edit-index').value = idx;
+  document.getElementById('ef-prenom').value  = p.prenom;
+  document.getElementById('ef-nom').value     = p.nom;
+  document.getElementById('ef-role').value    = p.role;
+  document.getElementById('ef-email').value   = p.email;
+  document.getElementById('ef-tel').value     = p.tel;
+  document.getElementById('ef-statut').value  = p.statut;
+
+  // Gestion spécialité
+  toggleEditSpecialite(p.role);
+  if (p.role === 'Médecin') {
+    document.getElementById('ef-specialite').value = p.specialite;
+  }
+
+  showPage('edit-personnel', null);
+}
+
+function submitEditPersonnel(e) {
+  e.preventDefault();
+  const idx  = parseInt(document.getElementById('edit-index').value);
+  const role = document.getElementById('ef-role').value;
+
+  personnels[idx] = {
+    ...personnels[idx],
+    prenom:     document.getElementById('ef-prenom').value.trim(),
+    nom:        document.getElementById('ef-nom').value.trim(),
+    role:       role,
+    specialite: role === 'Médecin' ? document.getElementById('ef-specialite').value : '—',
+    email:      document.getElementById('ef-email').value.trim(),
+    tel:        document.getElementById('ef-tel').value.trim(),
+    statut:     document.getElementById('ef-statut').value,
+  };
+
+  renderPersonnelTable();
+  showToast('Modifications enregistrées avec succès !', 'success');
+  showPage('personnels', null);
+}
+
+/* Ouverture du formulaire depuis le bouton "Ajouter" */
+function openAddPersonnel() {
+  document.getElementById('add-form').reset();
+  document.getElementById('field-specialite').style.display = 'none';
+  document.querySelectorAll('#p-add-personnel .field-error').forEach(e => e.style.display = 'none');
+  document.querySelectorAll('#p-add-personnel .invalid').forEach(e => e.classList.remove('invalid'));
+  showPage('add-personnel', null);
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 9 : SALLES — données + rendu + suppression
+   ─────────────────────────────────────────────── */
+let salles = [
+  {nom:'Salle 101', type:'Consultation', cap:'2 pers.', statut:'Disponible', med:'Dr. Mansouri'},
+  {nom:'Salle 102', type:'Consultation', cap:'2 pers.', statut:'Occupée',    med:'Dr. Triki'},
+  {nom:'Salle 201', type:'Opération',    cap:'8 pers.', statut:'Disponible', med:'—'},
+];
+
+function renderSalles() {
+  const tbody = document.getElementById('salles-tbody');
+  tbody.innerHTML = salles.map((s, i) => {
+    const cls = s.statut === 'Disponible' ? 'actif' : s.statut === 'Occupée' ? 'inactif' : 'sec-role';
+    return `
+      <tr>
+        <td><strong>${s.nom}</strong></td>
+        <td>${s.type}</td>
+        <td>${s.cap}</td>
+        <td><span class="badge ${cls}">${s.statut}</span></td>
+        <td>${s.med}</td>
+        <td>
+          <button class="btn-sm btn-danger" onclick="confirmDeleteSalle(${i})">Supprimer</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // Mise à jour compteurs
+  document.getElementById('salles-total').textContent  = salles.length;
+  document.getElementById('salles-dispo').textContent  = salles.filter(s => s.statut === 'Disponible').length;
+  document.getElementById('salles-occ').textContent    = salles.filter(s => s.statut === 'Occupée').length;
+  document.getElementById('salles-maint').textContent  = salles.filter(s => s.statut === 'Maintenance').length;
+}
+
+/* TÂCHE 9 : Confirmation suppression salle */
+function confirmDeleteSalle(idx) {
+  const s = salles[idx];
+  document.getElementById('modal-title').textContent   = 'Supprimer la salle';
+  document.getElementById('modal-message').textContent = `Êtes-vous sûr de vouloir supprimer "${s.nom}" ? Cette action est irréversible.`;
+  document.getElementById('modal-confirm-btn').textContent = 'Supprimer';
+  pendingAction = () => {
+    salles.splice(idx, 1);
+    renderSalles();
+    showToast(`${s.nom} supprimée avec succès.`, 'success');
+  };
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function openAddSalle() {
+  document.getElementById('new-salle-nom').value = '';
+  document.getElementById('new-salle-type').value = 'Consultation';
+  document.getElementById('new-salle-cap').value  = '';
+  document.getElementById('new-salle-med').value  = '';
+  document.getElementById('salle-modal').classList.add('open');
+}
+
+function submitAddSalle() {
+  const nom = document.getElementById('new-salle-nom').value.trim();
+  const cap = document.getElementById('new-salle-cap').value.trim();
+  if (!nom || !cap) { showToast('Nom et capacité obligatoires.', 'error'); return; }
+  salles.push({
+    nom,
+    type:   document.getElementById('new-salle-type').value,
+    cap,
+    statut: 'Disponible',
+    med:    document.getElementById('new-salle-med').value.trim() || '—',
+  });
+  renderSalles();
+  document.getElementById('salle-modal').classList.remove('open');
+  showToast('Salle ajoutée avec succès !', 'success');
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 10 : PROFIL
+   ─────────────────────────────────────────────── */
+function saveProfile() {
+  const prenom = document.getElementById('prof-prenom').value.trim();
+  const nom    = document.getElementById('prof-nom').value.trim();
+  const email  = document.getElementById('prof-email').value.trim();
+  if (!prenom || !nom || !email) { showToast('Prénom, nom et email sont obligatoires.', 'error'); return; }
+
+  // Met à jour la sidebar
+  document.getElementById('sidebar-name').textContent  = prenom + ' ' + nom;
+  document.getElementById('sidebar-email').textContent = email;
+  // Met à jour l'avatar (initiales)
+  document.querySelector('.avatar').textContent = (prenom[0] + nom[0]).toUpperCase();
+  document.getElementById('profile-avatar-ico').textContent = (prenom[0] + nom[0]).toUpperCase();
+
+  showToast('Profil mis à jour avec succès !', 'success');
+}
+
+/* ───────────────────────────────────────────────
+   TÂCHE 11 : RÉSEAUX SOCIAUX
+   ─────────────────────────────────────────────── */
+let socials = [
+  {ico:'📘', label:'Facebook',  url:'https://facebook.com/medgest'},
+  {ico:'📸', label:'Instagram', url:'https://instagram.com/medgest'},
+  {ico:'💼', label:'LinkedIn',  url:'https://linkedin.com/company/medgest'},
+];
+
+const socialOptions = [
+  {ico:'📘', label:'Facebook'},
+  {ico:'📸', label:'Instagram'},
+  {ico:'💼', label:'LinkedIn'},
+  {ico:'🐦', label:'Twitter / X'},
+  {ico:'▶️', label:'YouTube'},
+  {ico:'📱', label:'TikTok'},
+  {ico:'🌐', label:'Site web'},
+];
+
+function renderSocials() {
+  document.getElementById('social-list').innerHTML = socials.map((s, i) => `
+    <div class="social-row">
+      <div class="social-ico">${s.ico}</div>
+      <div class="social-label">${s.label}</div>
+      <div class="field" style="flex:1;margin-bottom:0;">
+        <input value="${s.url}" onchange="socials[${i}].url = this.value" placeholder="https://..."/>
+      </div>
+      <button class="btn-sm btn-danger" style="margin-left:8px;" onclick="removeSocial(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+function addSocialRow() {
+  // Propose un réseau pas encore ajouté
+  const used = socials.map(s => s.label);
+  const next = socialOptions.find(o => !used.includes(o.label)) || socialOptions[0];
+  socials.push({ico: next.ico, label: next.label, url: ''});
+  renderSocials();
+}
+
+function removeSocial(i) {
+  socials.splice(i, 1);
+  renderSocials();
+}
+
+function saveSocials() {
+  showToast('Réseaux sociaux enregistrés !', 'success');
+}
+
+/* ───────────────────────────────────────────────
+   PARAMÈTRES : Onglets
+   ─────────────────────────────────────────────── */
+function switchParamTab(tab, btn) {
+  document.querySelectorAll('.param-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.param-section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ptab-' + tab).classList.add('active');
+}
+
+function saveParams() {
+  showToast('Paramètres enregistrés !', 'success');
+}
+
+/* ───────────────────────────────────────────────
+   Notification système (interne)
+   ─────────────────────────────────────────────── */
+function addNotifFromSystem(text) {
+  notifications.unshift({id: notifCounter++, ico:'🔔', text, time:'à l\'instant', read:false});
+}
+
+/* ───────────────────────────────────────────────
+   INITIALISATION
+   ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderPersonnelTable();
+  renderSalles();
+  renderSocials();
+  renderNotifs();
+});
+</script>
+</body>
+</html>
