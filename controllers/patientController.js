@@ -1,53 +1,48 @@
-// File: controllers/patientController.js
 import Patient from '../models/Patient.js';
-
-export const createPatient = async (req, res) => {
-  try {
-    const patient_id = await Patient.createPatient(
-      req.body.utilisateur_id,
-      req.body.date_naissance,
-      req.body.telephone,
-      req.body.adresse || ''
-    );
-    res.status(201).json({ patient_id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+import User from '../models/User.js';
+import bcrypt from 'bcrypt';
 
 export const getAllPatients = async (req, res) => {
   try {
-    const patients = await Patient.getAllPatients();
+    const patients = await Patient.findAll();
     res.json(patients);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-export const getPatient = async (req, res) => {
+export const createPatient = async (req, res) => {
   try {
-    const patient = await Patient.getPatientById(req.params.id);
-    if (!patient) return res.status(404).json({ message: "Patient not found" });
-    res.json(patient);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { nom, email, password, date_naissance, telephone, adresse } = req.body;
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = await User.createUser(nom, email, hashedPassword, 'patient');
+    const patientId = await Patient.create(userId, date_naissance, telephone, adresse);
+    
+    res.status(201).json({ id: patientId, message: 'Patient créé avec succès' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
 export const updatePatient = async (req, res) => {
   try {
-    await Patient.updatePatient(req.params.id, req.body);
-    res.json({ message: "Patient updated" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { id } = req.params;
+    const updates = req.body;
+    
+    await Patient.update(id, updates);
+    res.json({ message: 'Patient mis à jour' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-export const searchPatients = async (req, res) => {
+export const deletePatient = async (req, res) => {
   try {
-    const patients = await Patient.searchPatients(req.params.query);
-    res.json(patients);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const { id } = req.params;
+    await Patient.delete(id);
+    res.json({ message: 'Patient supprimé' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

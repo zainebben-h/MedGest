@@ -1,54 +1,46 @@
-// File: models/Patient.js
 import pool from '../config/database.js';
 
 const Patient = {
-  // Create a new patient (linked to a user)
-  async createPatient(utilisateur_id, date_naissance, telephone, adresse = '') {
+  async create(utilisateur_id, date_naissance, telephone, adresse) {
     const [result] = await pool.query(
-      "INSERT INTO patients (utilisateur_id, date_naissance, telephone, adresse) VALUES (?, ?, ?, ?)",
+      'INSERT INTO patients (utilisateur_id, date_naissance, telephone, adresse) VALUES (?, ?, ?, ?)',
       [utilisateur_id, date_naissance, telephone, adresse]
     );
     return result.insertId;
   },
 
-  // Get all patients
-  async getAllPatients() {
+  async findAll() {
     const [rows] = await pool.query(`
-      SELECT u.id, u.nom, u.email, p.id as patient_id, p.date_naissance, p.telephone, p.adresse, p.statut
-      FROM utilisateurs u
-      JOIN patients p ON u.id = p.utilisateur_id
+      SELECT p.*, u.nom, u.email 
+      FROM patients p 
+      JOIN utilisateurs u ON p.utilisateur_id = u.id
     `);
     return rows;
   },
 
-  // Get a single patient by ID
-  async getPatientById(patient_id) {
+  async findById(id) {
     const [rows] = await pool.query(`
-      SELECT u.id, u.nom, u.email, p.date_naissance, p.telephone, p.adresse, p.statut
-      FROM utilisateurs u
-      JOIN patients p ON u.id = p.utilisateur_id
+      SELECT p.*, u.nom, u.email 
+      FROM patients p 
+      JOIN utilisateurs u ON p.utilisateur_id = u.id 
       WHERE p.id = ?
-    `, [patient_id]);
+    `, [id]);
     return rows[0];
   },
 
-  // Update patient info
-  async updatePatient(patient_id, data) {
-    await pool.query(
-      "UPDATE patients SET ? WHERE id = ?",
-      [data, patient_id]
-    );
+  async findByUserId(utilisateur_id) {
+    const [rows] = await pool.query('SELECT * FROM patients WHERE utilisateur_id = ?', [utilisateur_id]);
+    return rows[0];
   },
 
-  // Search patients by name or ID
-  async searchPatients(query) {
-    const [rows] = await pool.query(`
-      SELECT u.id, u.nom, u.email, p.id as patient_id, p.date_naissance, p.telephone, p.adresse, p.statut
-      FROM utilisateurs u
-      JOIN patients p ON u.id = p.utilisateur_id
-      WHERE u.nom LIKE ? OR p.id LIKE ?
-    `, [`%${query}%`, `%${query}%`]);
-    return rows;
+  async update(id, updates) {
+    const fields = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const values = Object.values(updates);
+    await pool.query(`UPDATE patients SET ${fields} WHERE id = ?`, [...values, id]);
+  },
+
+  async delete(id) {
+    await pool.query('DELETE FROM patients WHERE id = ?', [id]);
   }
 };
 

@@ -1,20 +1,23 @@
-# Use official Node.js image
 FROM node:18-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files first (for caching)
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy all other files
-COPY . .
+# Copie chaque fichier explicitement
+COPY server.js ./
+COPY config/ ./config/
+COPY controllers/ ./controllers/
+COPY middleware/ ./middleware/
+COPY models/ ./models/
+COPY routes/authRoutes.js ./routes/
+COPY routes/patientRoutes.js ./routes/
+COPY routes/rdvRoutes.js ./routes/
+COPY routes/salleRoutes.js ./routes/
+COPY routes/medecinRoutes.js ./routes/
+COPY routes/consultationRoutes.js ./routes/
 
-# Expose port
 EXPOSE 5000
 
-# Start the server
 CMD ["node", "server.js"]
